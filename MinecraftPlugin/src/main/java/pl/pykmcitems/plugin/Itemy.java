@@ -225,4 +225,43 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
+
+
+    // RÓZGA
+
+    public static ItemStack rozga(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.STICK);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(pogrubiony(
+                "Rózga",
+                NamedTextColor.GRAY
+        ));
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.text()
+                .append(tekst("Po ", NamedTextColor.GRAY))
+                .append(tekst("uderzeniu przeciwnika ", NamedTextColor.RED))
+                .append(tekst("usuwa mu hełm na ", NamedTextColor.GRAY))
+                .append(tekst("3.5 sekundy", NamedTextColor.YELLOW))
+                .build());
+
+        lore.add(tekst(
+                "Cooldown: 2 minuty",
+                NamedTextColor.GRAY
+        ));
+
+        meta.lore(lore);
+        meta.setCustomModelData(2);
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "rozga"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
 }
