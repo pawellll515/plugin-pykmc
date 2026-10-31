@@ -37,6 +37,11 @@ commands:
     usage: /ustawglowke
     permission: pykmcitems.ustawglowke
 
+  katana:
+    description: Nadaje Swiateczna Katane
+    usage: /katana
+    permission: pykmcitems.katana
+
 permissions:
   pykmcitems.koniczyna:
     description: Pozwala nadawac Koniczynke
@@ -59,5 +64,9 @@ permissions:
     default: op
 
   pykmcitems.ustawglowke:
-    description: Pozwala ustawiac glowke Rózgi
+    description: Pozwala ustawiac glowke Rozgi
+    default: op
+
+  pykmcitems.katana:
+    description: Pozwala nadawac Swiateczna Katane
     default: op
