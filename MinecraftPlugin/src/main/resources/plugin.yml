@@ -21,12 +21,21 @@ commands:
     description: Nadaje Glodomiot
     usage: /glodomiot
     permission: pykmcitems.glodomiot
+    
+  rozpadacz:
+    description: Nadaje Rozpadacz
+    usage: /rozpadacz
+    permission: pykmcitems.rozpadacz
 
 permissions:
   pykmcitems.koniczyna:
     description: Pozwala nadawac Koniczynke
     default: op
-
+    
+  pykmcitems.rozpadacz:
+    description: Pozwala nadawac Rozpadacz
+    default: op
+    
   pykmcitems.rog:
     description: Pozwala nadawac Rog Niebios
     default: op
