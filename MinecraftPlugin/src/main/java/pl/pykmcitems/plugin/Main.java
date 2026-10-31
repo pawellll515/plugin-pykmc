@@ -26,6 +26,9 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new Rozpadacz(this), this
         );
+        getServer().getPluginManager().registerEvents(
+                new Rozga(this), this
+        );
 
         getLogger().info("PykMCItems zostal wlaczony!");
     }
