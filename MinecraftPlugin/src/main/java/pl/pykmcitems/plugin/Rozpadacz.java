@@ -2,6 +2,8 @@
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -76,7 +78,10 @@ public class Rozpadacz implements Listener {
                 && cooldowns.get(uuid) > now) {
 
             player.sendActionBar(
-                    Component.text("§cRozpadacz jest na cooldownie!")
+                    Component.text(
+                            "Rozpadacz jest na cooldownie!",
+                            NamedTextColor.RED
+                    )
             );
 
             return;
@@ -87,8 +92,14 @@ public class Rozpadacz implements Listener {
         // Cooldown Minecrafta: 90 sekund
         player.setCooldown(Material.HEART_OF_THE_SEA, 1800);
 
+        // Komunikat dla używającego
         player.sendActionBar(
-                Component.text("§4§lRozpadacz §7został użyty!")
+                Component.text("Rozpadacz ", NamedTextColor.DARK_RED)
+                        .decorate(TextDecoration.BOLD)
+                        .append(Component.text(
+                                "został użyty!",
+                                NamedTextColor.GRAY
+                        ))
         );
 
         // Trafianie graczy w promieniu 4 kratek
@@ -115,10 +126,22 @@ public class Rozpadacz implements Listener {
                     target.getLocation()
             );
 
+            // Komunikat dla trafionego gracza
             target.sendActionBar(
-                    Component.text(
-                            "§4§lRozpadacz §7zabrał ci §e33% §7życia!"
-                    )
+                    Component.text("Rozpadacz ", NamedTextColor.DARK_RED)
+                            .decorate(TextDecoration.BOLD)
+                            .append(Component.text(
+                                    "zabrał ci ",
+                                    NamedTextColor.GRAY
+                            ))
+                            .append(Component.text(
+                                    "33%",
+                                    NamedTextColor.YELLOW
+                            ))
+                            .append(Component.text(
+                                    " życia!",
+                                    NamedTextColor.GRAY
+                            ))
             );
         }
     }
