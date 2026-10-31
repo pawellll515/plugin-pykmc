@@ -1,4 +1,3 @@
-
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
