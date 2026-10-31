@@ -3,21 +3,19 @@ package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
@@ -36,8 +34,7 @@ public class SwiatecznaKatana implements Listener {
     private final NamespacedKey katanaKey;
 
     private final Map<UUID, Long> cooldowns = new HashMap<>();
-
-    private final Map<UUID, BukkitRunnable> activeDashes = new HashMap<>();
+    private final Map<UUID, BukkitRunnable> activeFreezes = new HashMap<>();
 
     public SwiatecznaKatana(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -45,16 +42,12 @@ public class SwiatecznaKatana implements Listener {
     }
 
     private boolean isKatana(ItemStack item) {
-        if (item == null || item.getType() != Material.NETHERITE_SWORD) {
+        if (item == null || item.getType() != Material.NETHERITE_SWORD
+                || !item.hasItemMeta()) {
             return false;
         }
 
-        if (!item.hasItemMeta()) {
-            return false;
-        }
-
-        return item.getItemMeta()
-                .getPersistentDataContainer()
+        return item.getItemMeta().getPersistentDataContainer()
                 .has(katanaKey, PersistentDataType.BYTE);
     }
 
@@ -77,11 +70,7 @@ public class SwiatecznaKatana implements Listener {
 
         Player player = event.getPlayer();
 
-        if (!player.isSneaking()) {
-            return;
-        }
-
-        if (!hasKatana(player)) {
+        if (!player.isSneaking() || !hasKatana(player)) {
             return;
         }
 
@@ -101,10 +90,6 @@ public class SwiatecznaKatana implements Listener {
 
         UUID uuid = player.getUniqueId();
 
-        if (activeDashes.containsKey(uuid)) {
-            return;
-        }
-
         long now = System.currentTimeMillis();
         long cooldownEnd = cooldowns.getOrDefault(uuid, 0L);
 
@@ -116,11 +101,26 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
+        Location destination = getSafeTeleportLocation(player, target);
+
+        if (destination == null) {
+            player.sendActionBar(Component.text(
+                    "Nie ma bezpiecznego miejsca do teleportacji!",
+                    NamedTextColor.RED
+            ));
+            return;
+        }
+
+        if (!player.teleport(destination)) {
+            return;
+        }
+
         cooldowns.put(uuid, now + 90_000L);
         player.setCooldown(Material.NETHERITE_SWORD, 1800);
 
-        // Obrażenia przypisane do gracza używającego Katany.
-        target.damage(8.0, player);
+        if (target.isOnline() && !target.isDead()) {
+            target.damage(8.0, player);
+        }
 
         player.sendActionBar(Component.text(
                 "Użyłeś Świątecznej Katany!",
@@ -132,35 +132,146 @@ public class SwiatecznaKatana implements Listener {
                 NamedTextColor.RED
         ));
 
-        // Zamrożenie przeciwnika na 3 sekundy.
         zamrozGracza(target);
-
-        // Wyznaczenie miejsca 2 bloki za przeciwnikiem.
-        Location destination = getBehindLocation(target);
-
-        // Rozpoczęcie dasha.
-        startDash(player, destination);
     }
 
-    private Location getBehindLocation(Player target) {
+    private Location getBehindLocation(Player target, double distance) {
 
-        Location targetLocation = target.getLocation().clone();
+        Location location = target.getLocation().clone();
 
-        double yaw = Math.toRadians(targetLocation.getYaw());
+        double yaw = Math.toRadians(location.getYaw());
 
-        double x = Math.sin(yaw) * 2.0;
-        double z = -Math.cos(yaw) * 2.0;
+        double x = Math.sin(yaw) * distance;
+        double z = -Math.cos(yaw) * distance;
 
-        targetLocation.add(x, 0, z);
+        location.add(x, 0, z);
 
-        return targetLocation;
+        return location;
+    }
+
+    private Location getSafeTeleportLocation(Player player, Player target) {
+
+        Location targetLocation = target.getLocation();
+        World world = target.getWorld();
+
+        Vector backwards = new Vector(
+                Math.sin(Math.toRadians(targetLocation.getYaw())),
+                0,
+                -Math.cos(Math.toRadians(targetLocation.getYaw()))
+        );
+
+        // Szukamy miejsca od 2 bloków do 0 bloków za przeciwnikiem.
+        for (double distance = 2.0; distance >= 0.0; distance -= 0.25) {
+
+            Location candidate = getBehindLocation(target, distance);
+
+            candidate.setYaw(player.getLocation().getYaw());
+            candidate.setPitch(player.getLocation().getPitch());
+
+            if (!isSafeLocation(player, candidate)) {
+                continue;
+            }
+
+            // Sprawdzamy, czy droga od gracza do miejsca docelowego
+            // nie przechodzi przez pełne bloki.
+            if (!hasClearPath(player, candidate)) {
+                continue;
+            }
+
+            return candidate;
+        }
+
+        return null;
+    }
+
+    private boolean hasClearPath(Player player, Location destination) {
+
+        World world = player.getWorld();
+
+        Location start = player.getLocation().clone().add(0, 1, 0);
+        Location end = destination.clone().add(0, 1, 0);
+
+        Vector direction = end.toVector().subtract(start.toVector());
+        double distance = direction.length();
+
+        if (distance <= 0.1) {
+            return true;
+        }
+
+        RayTraceResult result = world.rayTraceBlocks(
+                start,
+                direction.normalize(),
+                distance,
+                FluidCollisionMode.NEVER,
+                true
+        );
+
+        return result == null || result.getHitBlock() == null;
+    }
+
+    private boolean isSafeLocation(Player player, Location location) {
+
+        World world = location.getWorld();
+
+        if (world == null) {
+            return false;
+        }
+
+        // Sprawdzamy przestrzeń na wysokości nóg, tułowia i głowy.
+        Location feet = location.clone();
+        Location body = location.clone().add(0, 0.9, 0);
+        Location head = location.clone().add(0, 1.6, 0);
+
+        if (!isPassableForPlayer(world, feet)
+                || !isPassableForPlayer(world, body)
+                || !isPassableForPlayer(world, head)) {
+            return false;
+        }
+
+        // Sprawdzamy, czy pod graczem znajduje się podłoże.
+        Location ground = location.clone().subtract(0, 0.1, 0);
+
+        if (ground.getBlock().isPassable()) {
+            return false;
+        }
+
+        // Nie teleportujemy gracza w innego gracza.
+        for (Entity entity : world.getNearbyEntities(
+                location, 0.3, 0.9, 0.3)) {
+
+            if (entity instanceof Player && entity != player) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean isPassableForPlayer(World world, Location location) {
+
+        Material material = location.getBlock().getType();
+
+        // Bloki bez kolizji, np. trawa i kwiaty, nie blokują.
+        if (location.getBlock().isPassable()) {
+            return true;
+        }
+
+        return false;
     }
 
     private void zamrozGracza(Player target) {
 
+        UUID uuid = target.getUniqueId();
+
+        BukkitRunnable previous = activeFreezes.remove(uuid);
+
+        if (previous != null) {
+            previous.cancel();
+        }
+
         Location frozenLocation = target.getLocation().clone();
 
-        new BukkitRunnable() {
+        BukkitRunnable freeze = new BukkitRunnable() {
 
             int ticks = 0;
 
@@ -168,11 +279,13 @@ public class SwiatecznaKatana implements Listener {
             public void run() {
 
                 if (!target.isOnline() || target.isDead()) {
+                    activeFreezes.remove(uuid);
                     cancel();
                     return;
                 }
 
                 if (ticks >= 60) {
+                    activeFreezes.remove(uuid);
                     cancel();
                     return;
                 }
@@ -182,145 +295,37 @@ public class SwiatecznaKatana implements Listener {
 
                 ticks++;
             }
-
-        }.runTaskTimer(plugin, 0L, 1L);
-    }
-
-    private void startDash(Player player, Location destination) {
-
-        UUID uuid = player.getUniqueId();
-
-        BukkitRunnable dash = new BukkitRunnable() {
-
-            int ticks = 0;
-
-            @Override
-            public void run() {
-
-                if (!player.isOnline() || player.isDead()) {
-                    stopDash(player);
-                    cancel();
-                    return;
-                }
-
-                if (!player.getWorld().equals(destination.getWorld())) {
-                    stopDash(player);
-                    cancel();
-                    return;
-                }
-
-                Location current = player.getLocation();
-
-                Vector difference = destination.toVector()
-                        .subtract(current.toVector());
-
-                double distance = difference.length();
-
-                // Dash zakończony.
-                if (distance <= 0.7 || ticks >= 15) {
-                    stopDash(player);
-                    cancel();
-                    return;
-                }
-
-                Vector direction = difference.normalize();
-
-                // Sprawdzenie przeszkód na wysokości nóg, tułowia i głowy.
-                if (isBlocked(player, direction)) {
-                    stopDash(player);
-                    cancel();
-                    return;
-                }
-
-                // Szybki dash.
-                player.setVelocity(direction.multiply(1.15));
-
-                // Śnieżne particle przy nogach.
-                Location particleLocation = player.getLocation().clone();
-                particleLocation.add(0, 0.1, 0);
-
-                player.getWorld().spawnParticle(
-                        Particle.SNOWFLAKE,
-                        particleLocation,
-                        5,
-                        0.25,
-                        0.05,
-                        0.25,
-                        0.01
-                );
-
-                ticks++;
-            }
-
         };
 
-        activeDashes.put(uuid, dash);
-        dash.runTaskTimer(plugin, 0L, 1L);
-    }
-
-    private boolean isBlocked(Player player, Vector direction) {
-
-        Location base = player.getLocation();
-        World world = player.getWorld();
-
-        double distance = 1.25;
-
-        double[] heights = {0.2, 0.9, 1.6};
-
-        for (double height : heights) {
-
-            Location start = base.clone().add(0, height, 0);
-
-            RayTraceResult result = world.rayTraceBlocks(
-                    start,
-                    direction,
-                    distance,
-                    FluidCollisionMode.NEVER,
-                    true
-            );
-
-            if (result != null && result.getHitBlock() != null) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private void stopDash(Player player) {
-
-        UUID uuid = player.getUniqueId();
-
-        player.setVelocity(new Vector(0, 0, 0));
-
-        activeDashes.remove(uuid);
+        activeFreezes.put(uuid, freeze);
+        freeze.runTaskTimer(plugin, 0L, 1L);
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
 
-        Player player = event.getPlayer();
+        UUID uuid = event.getPlayer().getUniqueId();
 
-        cooldowns.remove(player.getUniqueId());
+        cooldowns.remove(uuid);
 
-        BukkitRunnable dash = activeDashes.remove(player.getUniqueId());
+        BukkitRunnable freeze = activeFreezes.remove(uuid);
 
-        if (dash != null) {
-            dash.cancel();
+        if (freeze != null) {
+            freeze.cancel();
         }
     }
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
 
-        Player player = event.getEntity();
+        UUID uuid = event.getEntity().getUniqueId();
 
-        cooldowns.remove(player.getUniqueId());
+        cooldowns.remove(uuid);
 
-        BukkitRunnable dash = activeDashes.remove(player.getUniqueId());
+        BukkitRunnable freeze = activeFreezes.remove(uuid);
 
-        if (dash != null) {
-            dash.cancel();
+        if (freeze != null) {
+            freeze.cancel();
         }
     }
 }
