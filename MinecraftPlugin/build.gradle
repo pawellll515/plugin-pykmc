@@ -1,12 +1,14 @@
+
 plugins {
     id 'java'
 }
 
-group = 'pl.twojanazwa'
+group = 'pykmcitems'
 version = '1.0.0'
 
 repositories {
     mavenCentral()
+
     maven {
         url = 'https://repo.papermc.io/repository/maven-public/'
     }
@@ -27,5 +29,5 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.jar {
-    archiveBaseName = 'MinecraftPlugin'
+    archiveBaseName = 'PykMCItems'
 }
