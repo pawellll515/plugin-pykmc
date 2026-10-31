@@ -23,6 +23,10 @@ public class Main extends JavaPlugin {
                 new Glodomiot(this), this
         );
 
+        getServer().getPluginManager().registerEvents(
+                new Rozpadacz(this), this
+        );
+
         getLogger().info("PykMCItems zostal wlaczony!");
     }
 
@@ -61,6 +65,12 @@ public class Main extends JavaPlugin {
             player.sendMessage("§6Otrzymales Glodomiot!");
             return true;
         }
+        
+        if (command.getName().equalsIgnoreCase("rozpadacz")) {
+            player.getInventory().addItem(Itemy.rozpadacz(this));
+            player.sendMessage("§4Otrzymales Rozpadacz!");
+            return true;
+}
 
         return true;
     }
