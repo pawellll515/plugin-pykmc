@@ -1,4 +1,4 @@
-package pl.twojanazwa.plugin;
+package pl.pykmcitems.plugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
