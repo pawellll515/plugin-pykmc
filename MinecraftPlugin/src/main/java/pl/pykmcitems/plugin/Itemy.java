@@ -11,6 +11,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -226,7 +228,6 @@ public class Itemy {
         return item;
     }
 
-
     // RÓZGA
 
     public static ItemStack rozga(JavaPlugin plugin) {
@@ -264,7 +265,8 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
-        // ŚWIĄTECZNA KATANA
+
+    // ŚWIĄTECZNA KATANA
 
     public static ItemStack swiatecznaKatana(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.NETHERITE_SWORD);
@@ -277,52 +279,38 @@ public class Itemy {
 
         List<Component> lore = new ArrayList<>();
 
-        lore.add(tekst(
-                "Po PPM + SHIFT na gracza teleportuje",
-                NamedTextColor.GRAY
-        ));
+        lore.add(Component.text()
+                .append(tekst("Po ", NamedTextColor.GRAY))
+                .append(tekst("PPM + SHIFT", NamedTextColor.GREEN))
+                .append(tekst(" na gracza", NamedTextColor.GRAY))
+                .build());
 
-        lore.add(tekst(
-                "cię 2 bloki za cel i zamraża go",
-                NamedTextColor.GRAY
-        ));
+        lore.add(Component.text()
+                .append(tekst("teleportuje cię ", NamedTextColor.GRAY))
+                .append(tekst("2 bloki", NamedTextColor.AQUA))
+                .append(tekst(" za cel", NamedTextColor.GRAY))
+                .build());
 
-        lore.add(tekst(
-                "zadając mu 4 serca",
-                NamedTextColor.GRAY
-        ));
+        lore.add(Component.text()
+                .append(tekst("i zamraża go, zadając ", NamedTextColor.GRAY))
+                .append(tekst("4 serca", NamedTextColor.RED))
+                .build());
 
         lore.add(Component.empty());
 
-        lore.add(tekst(
-                "Cooldown: 1 minuta 30 sekund",
-                NamedTextColor.GRAY
-        ));
+        lore.add(Component.text()
+                .append(tekst("Cooldown: ", NamedTextColor.GRAY))
+                .append(tekst("1 minuta 30 sekund", NamedTextColor.GREEN))
+                .build());
 
         meta.lore(lore);
         meta.setCustomModelData(2);
 
-        meta.addEnchant(
-                org.bukkit.enchantments.Enchantment.SHARPNESS,
-                6,
-                true
-        );
+        meta.addEnchant(Enchantment.SHARPNESS, 6, true);
+        meta.addEnchant(Enchantment.FIRE_ASPECT, 3, true);
+        meta.addEnchant(Enchantment.UNBREAKING, 4, true);
 
-        meta.addEnchant(
-                org.bukkit.enchantments.Enchantment.FIRE_ASPECT,
-                3,
-                true
-        );
-
-        meta.addEnchant(
-                org.bukkit.enchantments.Enchantment.UNBREAKING,
-                4,
-                true
-        );
-
-        meta.addItemFlags(
-                org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS
-        );
+        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "katana"),
