@@ -32,7 +32,7 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new Rozga(this), this
         );
-        
+
         getServer().getPluginManager().registerEvents(
                 new SwiatecznaKatana(this), this
         );
@@ -114,6 +114,18 @@ public class Main extends JavaPlugin {
         if (command.getName().equalsIgnoreCase("katana")) {
             player.getInventory().addItem(Itemy.swiatecznaKatana(this));
             player.sendMessage("§aOtrzymales Świąteczną Katanę!");
+            return true;
+        }
+
+        if (command.getName().equalsIgnoreCase("topor")) {
+
+            if (!player.hasPermission("pykmcitems.topor")) {
+                player.sendMessage("§cNie masz uprawnien do tej komendy!");
+                return true;
+            }
+
+            player.getInventory().addItem(Itemy.toporWykluczenia(this));
+            player.sendMessage("§aOtrzymales §6§lTopór Wykluczenia§a!");
             return true;
         }
 
