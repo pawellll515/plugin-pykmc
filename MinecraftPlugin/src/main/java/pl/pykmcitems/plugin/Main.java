@@ -1,4 +1,3 @@
-
 package pl.pykmcitems.plugin;
 
 import org.bukkit.Material;
@@ -12,34 +11,14 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
-
-        getServer().getPluginManager().registerEvents(
-                new Koniczynka(this), this
-        );
-
-        getServer().getPluginManager().registerEvents(
-                new Rog(this), this
-        );
-
-        getServer().getPluginManager().registerEvents(
-                new Glodomiot(this), this
-        );
-
-        getServer().getPluginManager().registerEvents(
-                new Rozpadacz(this), this
-        );
-
-        getServer().getPluginManager().registerEvents(
-                new Rozga(this), this
-        );
-
-        getServer().getPluginManager().registerEvents(
-                new SwiatecznaKatana(this), this
-        );
-
-        getServer().getPluginManager().registerEvents(
-                new ToporWykluczenia(this), this
-        );
+        getServer().getPluginManager().registerEvents(new Koniczynka(this), this);
+        getServer().getPluginManager().registerEvents(new Rog(this), this);
+        getServer().getPluginManager().registerEvents(new Glodomiot(this), this);
+        getServer().getPluginManager().registerEvents(new Rozpadacz(this), this);
+        getServer().getPluginManager().registerEvents(new Rozga(this), this);
+        getServer().getPluginManager().registerEvents(new SwiatecznaKatana(this), this);
+        getServer().getPluginManager().registerEvents(new ToporWykluczenia(this), this);
+        getServer().getPluginManager().registerEvents(new Hydra(this), this);
 
         getLogger().info("PykMCItems zostal wlaczony!");
     }
@@ -56,14 +35,12 @@ public class Main extends JavaPlugin {
             String label,
             String[] args
     ) {
-
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Tej komendy moze uzyc tylko gracz!");
             return true;
         }
 
         if (command.getName().equalsIgnoreCase("ustawglowke")) {
-
             if (!player.hasPermission("pykmcitems.ustawglowke")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -81,7 +58,6 @@ public class Main extends JavaPlugin {
 
             player.sendMessage("§aPomyslnie zapisano glowke Rózgi!");
             player.sendMessage("§7Od teraz Rózga bedzie uzywac tej glowki.");
-
             return true;
         }
 
@@ -122,7 +98,6 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("topor")) {
-
             if (!player.hasPermission("pykmcitems.topor")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -130,6 +105,17 @@ public class Main extends JavaPlugin {
 
             player.getInventory().addItem(Itemy.toporWykluczenia(this));
             player.sendMessage("§aOtrzymales §6§lTopór Wykluczenia§a!");
+            return true;
+        }
+
+        if (command.getName().equalsIgnoreCase("hydra")) {
+            if (!player.hasPermission("pykmcitems.hydra")) {
+                player.sendMessage("§cNie masz uprawnien do tej komendy!");
+                return true;
+            }
+
+            player.getInventory().addItem(Itemy.hydra(this));
+            player.sendMessage("§aOtrzymales §1§lHydre§a!");
             return true;
         }
 
