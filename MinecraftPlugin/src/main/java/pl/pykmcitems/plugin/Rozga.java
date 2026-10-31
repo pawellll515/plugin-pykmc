@@ -1,7 +1,7 @@
 
 package pl.pykmcitems.plugin;
 
-import org.bukkit.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.PlayerProfile;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -128,7 +128,7 @@ public class Rozga implements Listener {
 
         UUID uuid = player.getUniqueId();
 
-        Bukkit.createPlayerProfile("Santa").update()
+        Bukkit.createProfile("Santa").update()
                 .thenAccept(profile -> {
 
                     Bukkit.getScheduler().runTask(plugin, () -> {
