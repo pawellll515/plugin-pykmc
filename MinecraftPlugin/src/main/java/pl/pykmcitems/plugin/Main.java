@@ -107,6 +107,12 @@ public class Main extends JavaPlugin {
             return true;
         }
 
+        if (command.getName().equalsIgnoreCase("katana")) {
+            player.getInventory().addItem(Itemy.swiatecznaKatana(this));
+            player.sendMessage("§aOtrzymales Świąteczną Katanę!");
+            return true;
+        }
+
         return true;
     }
 }
