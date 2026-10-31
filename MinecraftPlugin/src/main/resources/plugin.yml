@@ -26,6 +26,11 @@ commands:
     description: Nadaje Rozpadacz
     usage: /rozpadacz
     permission: pykmcitems.rozpadacz
+    
+  topor:
+    description: Daje Topór Wykluczenia
+    usage: /topor
+    permission: pykmcitems.topor
 
   rozga:
     description: Nadaje Rozge
@@ -51,6 +56,10 @@ permissions:
     description: Pozwala nadawac Rozpadacz
     default: op
 
+  pykmcitems.topor:
+    description: Pozwala używać komendy topor
+    default: op
+    
   pykmcitems.rog:
     description: Pozwala nadawac Rog Niebios
     default: op
