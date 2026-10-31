@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import org.bukkit.command.Command;
@@ -9,12 +10,17 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onEnable() {
+
         getServer().getPluginManager().registerEvents(
                 new Koniczynka(this), this
         );
 
         getServer().getPluginManager().registerEvents(
                 new Rog(this), this
+        );
+
+        getServer().getPluginManager().registerEvents(
+                new Glodomiot(this), this
         );
 
         getLogger().info("PykMCItems zostal wlaczony!");
@@ -32,6 +38,7 @@ public class Main extends JavaPlugin {
             String label,
             String[] args
     ) {
+
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Tej komendy moze uzyc tylko gracz!");
             return true;
@@ -46,6 +53,12 @@ public class Main extends JavaPlugin {
         if (command.getName().equalsIgnoreCase("rog")) {
             player.getInventory().addItem(Itemy.rogNiebios(this));
             player.sendMessage("§bOtrzymales Rog Niebios!");
+            return true;
+        }
+
+        if (command.getName().equalsIgnoreCase("glodomiot")) {
+            player.getInventory().addItem(Itemy.glodomiot(this));
+            player.sendMessage("§6Otrzymales Glodomiot!");
             return true;
         }
 
