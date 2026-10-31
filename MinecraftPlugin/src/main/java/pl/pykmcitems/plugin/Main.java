@@ -32,6 +32,10 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new Rozga(this), this
         );
+        
+        getServer().getPluginManager().registerEvents(
+                new SwiatecznaKatana(this), this
+        );
 
         getLogger().info("PykMCItems zostal wlaczony!");
     }
