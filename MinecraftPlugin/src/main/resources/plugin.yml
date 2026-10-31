@@ -16,40 +16,48 @@ commands:
     description: Nadaje Rog Niebios
     usage: /rog
     permission: pykmcitems.rog
-    
+
   glodomiot:
     description: Nadaje Glodomiot
     usage: /glodomiot
     permission: pykmcitems.glodomiot
-    
+
   rozpadacz:
     description: Nadaje Rozpadacz
     usage: /rozpadacz
     permission: pykmcitems.rozpadacz
-    
+
   rozga:
     description: Nadaje Rozge
     usage: /rozga
     permission: pykmcitems.rozga
 
+  ustawglowke:
+    description: Ustawia glowke uzywana przez Rozge
+    usage: /ustawglowke
+    permission: pykmcitems.ustawglowke
+
 permissions:
   pykmcitems.koniczyna:
     description: Pozwala nadawac Koniczynke
     default: op
-    
+
   pykmcitems.rozpadacz:
     description: Pozwala nadawac Rozpadacz
     default: op
-    
+
   pykmcitems.rog:
     description: Pozwala nadawac Rog Niebios
     default: op
+
   pykmcitems.glodomiot:
     description: Pozwala nadawac Glodomiot
     default: op
-  pykmcitems.glodomiot:
-    description: Pozwala nadawac Glodomiot
-    default: op
+
   pykmcitems.rozga:
     description: Pozwala nadawac Rozge
+    default: op
+
+  pykmcitems.ustawglowke:
+    description: Pozwala ustawiac glowke Rózgi
     default: op
