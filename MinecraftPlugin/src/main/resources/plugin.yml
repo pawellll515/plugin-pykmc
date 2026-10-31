@@ -12,8 +12,16 @@ commands:
     usage: /koniczyna
     permission: pykmcitems.koniczyna
 
+  rog:
+    description: Nadaje Rog Niebios
+    usage: /rog
+    permission: pykmcitems.rog
+
 permissions:
   pykmcitems.koniczyna:
     description: Pozwala nadawac Koniczynke
     default: op
-    
+
+  pykmcitems.rog:
+    description: Pozwala nadawac Rog Niebios
+    default: op
