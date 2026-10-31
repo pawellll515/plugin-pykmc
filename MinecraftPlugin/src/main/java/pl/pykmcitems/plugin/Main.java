@@ -73,8 +73,12 @@ public class Main extends JavaPlugin {
             player.getInventory().addItem(Itemy.rozpadacz(this));
             player.sendMessage("§4Otrzymales Rozpadacz!");
             return true;
-}
-
+        }
+        if (command.getName().equalsIgnoreCase("rozga")) {
+            player.getInventory().addItem(Itemy.rozga(this));
+            player.sendMessage("§7Otrzymales Rozge!");
+            return true;
+        }
         return true;
     }
 }
