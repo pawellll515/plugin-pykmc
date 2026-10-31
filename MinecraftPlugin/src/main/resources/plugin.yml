@@ -26,6 +26,11 @@ commands:
     description: Nadaje Rozpadacz
     usage: /rozpadacz
     permission: pykmcitems.rozpadacz
+    
+  rozga:
+    description: Nadaje Rozge
+    usage: /rozga
+    permission: pykmcitems.rozga
 
 permissions:
   pykmcitems.koniczyna:
@@ -44,4 +49,7 @@ permissions:
     default: op
   pykmcitems.glodomiot:
     description: Pozwala nadawac Glodomiot
+    default: op
+  pykmcitems.rozga:
+    description: Pozwala nadawac Rozge
     default: op
