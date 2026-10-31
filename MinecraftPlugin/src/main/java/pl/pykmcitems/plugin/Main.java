@@ -37,6 +37,10 @@ public class Main extends JavaPlugin {
                 new SwiatecznaKatana(this), this
         );
 
+        getServer().getPluginManager().registerEvents(
+                new ToporWykluczenia(this), this
+        );
+
         getLogger().info("PykMCItems zostal wlaczony!");
     }
 
