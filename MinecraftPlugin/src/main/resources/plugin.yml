@@ -46,6 +46,11 @@ commands:
     description: Nadaje Swiateczna Katane
     usage: /katana
     permission: pykmcitems.katana
+    
+  hydra:
+    description: Nadaje Hydre
+    usage: /hydra
+    permission: pykmcitems.hydra
 
 permissions:
   pykmcitems.koniczyna:
@@ -66,6 +71,10 @@ permissions:
 
   pykmcitems.glodomiot:
     description: Pozwala nadawac Glodomiot
+    default: op
+
+  pykmcitems.hydra:
+    description: Pozwala nadawac Hydre
     default: op
 
   pykmcitems.rozga:
