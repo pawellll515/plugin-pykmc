@@ -3,6 +3,7 @@ package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -151,15 +152,6 @@ public class SwiatecznaKatana implements Listener {
 
     private Location getSafeTeleportLocation(Player player, Player target) {
 
-        Location targetLocation = target.getLocation();
-        World world = target.getWorld();
-
-        Vector backwards = new Vector(
-                Math.sin(Math.toRadians(targetLocation.getYaw())),
-                0,
-                -Math.cos(Math.toRadians(targetLocation.getYaw()))
-        );
-
         // Szukamy miejsca od 2 bloków do 0 bloków za przeciwnikiem.
         for (double distance = 2.0; distance >= 0.0; distance -= 0.25) {
 
@@ -172,8 +164,6 @@ public class SwiatecznaKatana implements Listener {
                 continue;
             }
 
-            // Sprawdzamy, czy droga od gracza do miejsca docelowego
-            // nie przechodzi przez pełne bloki.
             if (!hasClearPath(player, candidate)) {
                 continue;
             }
@@ -222,16 +212,9 @@ public class SwiatecznaKatana implements Listener {
         Location body = location.clone().add(0, 0.9, 0);
         Location head = location.clone().add(0, 1.6, 0);
 
-        if (!isPassableForPlayer(world, feet)
-                || !isPassableForPlayer(world, body)
-                || !isPassableForPlayer(world, head)) {
-            return false;
-        }
-
-        // Sprawdzamy, czy pod graczem znajduje się podłoże.
-        Location ground = location.clone().subtract(0, 0.1, 0);
-
-        if (ground.getBlock().isPassable()) {
+        if (!feet.getBlock().isPassable()
+                || !body.getBlock().isPassable()
+                || !head.getBlock().isPassable()) {
             return false;
         }
 
@@ -244,19 +227,10 @@ public class SwiatecznaKatana implements Listener {
             }
         }
 
+        // Nie wymagamy bloku pod nogami.
+        // Dzięki temu teleportacja działa również w powietrzu.
+
         return true;
-    }
-
-    private boolean isPassableForPlayer(World world, Location location) {
-
-        Material material = location.getBlock().getType();
-
-        // Bloki bez kolizji, np. trawa i kwiaty, nie blokują.
-        if (location.getBlock().isPassable()) {
-            return true;
-        }
-
-        return false;
     }
 
     private void zamrozGracza(Player target) {
