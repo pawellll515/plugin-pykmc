@@ -1,6 +1,18 @@
-name: MinecraftPlugin
+
+name: PykMCItems
 version: 1.0.0
-main: pl.twojanazwa.plugin.Main
+main: pykmcitems.Main
 api-version: '1.21'
-author: TwojaNazwa
-description: Custom Minecraft plugin
+author: PykMC
+description: Custom items plugin for Paper and Purpur
+
+commands:
+  koniczyna:
+    description: Nadaje Koniczynke
+    usage: /koniczyna
+    permission: pykmcitems.koniczyna
+
+permissions:
+  pykmcitems.koniczyna:
+    description: Pozwala nadawac Koniczynke
+    default: op
