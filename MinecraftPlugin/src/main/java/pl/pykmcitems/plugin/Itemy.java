@@ -321,4 +321,49 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
+    // TOPÓR WYKLUCZENIA
+
+    public static ItemStack toporWykluczenia(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.IRON_AXE);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(pogrubiony(
+                "Topór Wykluczenia",
+                NamedTextColor.GOLD
+        ));
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.text()
+                .append(tekst("Po ", NamedTextColor.GRAY))
+                .append(tekst("uderzeniu przeciwnika", NamedTextColor.RED))
+                .append(tekst(" blokuje", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("używanie mu ", NamedTextColor.GRAY))
+                .append(tekst("ekwipunku", NamedTextColor.YELLOW))
+                .append(tekst(" na ", NamedTextColor.GRAY))
+                .append(tekst("8 sekund", NamedTextColor.GREEN))
+                .build());
+
+        lore.add(Component.empty());
+
+        lore.add(Component.text()
+                .append(tekst("Cooldown: ", NamedTextColor.GRAY))
+                .append(tekst("2 minuty", NamedTextColor.YELLOW))
+                .build());
+
+        meta.lore(lore);
+        meta.setCustomModelData(3);
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "topor_wykluczenia"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
 }
