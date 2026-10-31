@@ -1,0 +1,6 @@
+name: MinecraftPlugin
+version: 1.0.0
+main: pl.twojanazwa.plugin.Main
+api-version: '1.21'
+author: TwojaNazwa
+description: Custom Minecraft plugin
