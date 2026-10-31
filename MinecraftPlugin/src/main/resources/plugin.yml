@@ -16,3 +16,4 @@ permissions:
   pykmcitems.koniczyna:
     description: Pozwala nadawac Koniczynke
     default: op
+    
