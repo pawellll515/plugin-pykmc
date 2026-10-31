@@ -264,4 +264,73 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
+        // ŚWIĄTECZNA KATANA
+
+    public static ItemStack swiatecznaKatana(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.NETHERITE_SWORD);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(pogrubiony(
+                "Świąteczna Katana",
+                NamedTextColor.GREEN
+        ));
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(tekst(
+                "Po PPM + SHIFT na gracza teleportuje",
+                NamedTextColor.GRAY
+        ));
+
+        lore.add(tekst(
+                "cię 2 bloki za cel i zamraża go",
+                NamedTextColor.GRAY
+        ));
+
+        lore.add(tekst(
+                "zadając mu 4 serca",
+                NamedTextColor.GRAY
+        ));
+
+        lore.add(Component.empty());
+
+        lore.add(tekst(
+                "Cooldown: 1 minuta 30 sekund",
+                NamedTextColor.GRAY
+        ));
+
+        meta.lore(lore);
+        meta.setCustomModelData(2);
+
+        meta.addEnchant(
+                org.bukkit.enchantments.Enchantment.SHARPNESS,
+                6,
+                true
+        );
+
+        meta.addEnchant(
+                org.bukkit.enchantments.Enchantment.FIRE_ASPECT,
+                3,
+                true
+        );
+
+        meta.addEnchant(
+                org.bukkit.enchantments.Enchantment.UNBREAKING,
+                4,
+                true
+        );
+
+        meta.addItemFlags(
+                org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS
+        );
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "katana"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
 }
