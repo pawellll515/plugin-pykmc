@@ -1,7 +1,7 @@
 
 name: PykMCItems
 version: 1.0.0
-main: pykmcitems.Main
+main: pl.pykmcitems.plugin.Main
 api-version: '1.21'
 author: PykMC
 description: Custom items plugin for Paper and Purpur
