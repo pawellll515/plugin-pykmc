@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
@@ -128,6 +129,50 @@ public class Itemy {
 
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "rog_niebios"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    // GŁODOMIOT
+
+    public static ItemStack glodomiot(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.IRON_HOE);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(pogrubiony(
+                "Głodomiot",
+                NamedTextColor.GOLD
+        ));
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.text()
+                .append(tekst("Po ", NamedTextColor.GRAY))
+                .append(tekst("uderzeniu przeciwnika", NamedTextColor.RED))
+                .append(tekst(" głodzisz go,", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("przez co jego hungerbar spada ", NamedTextColor.GRAY))
+                .append(tekst("natychmiastowo", NamedTextColor.YELLOW))
+                .build());
+
+        lore.add(Component.empty());
+
+        lore.add(tekst(
+                "Cooldown: 1 minuta 30 sekund",
+                NamedTextColor.GRAY
+        ));
+
+        meta.lore(lore);
+        meta.setCustomModelData(3);
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "glodomiot"),
                 PersistentDataType.BYTE,
                 (byte) 1
         );
