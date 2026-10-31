@@ -12,6 +12,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: MinecraftPlugin
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -34,5 +38,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: PykMCItems
-          path: build/libs/*.jar
+          path: MinecraftPlugin/build/libs/*.jar
           if-no-files-found: error
