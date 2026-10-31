@@ -1,8 +1,6 @@
 
 package pl.pykmcitems.plugin;
 
-import com.destroystokyo.paper.profile.PlayerProfile;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -23,9 +21,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -104,12 +101,26 @@ public class Rozga implements Listener {
                 || type == Material.PIGLIN_HEAD;
     }
 
-    // TWORZENIE GŁÓWKI SANTA
+    // TWORZENIE GŁÓWKI ZAPISANEJ W CONFIGU
 
-    private ItemStack createSantaHead() {
+    private ItemStack createTemporaryHead() {
 
-        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-        SkullMeta meta = (SkullMeta) head.getItemMeta();
+        ItemStack configuredHead =
+                plugin.getConfig().getItemStack("rozga.head");
+
+        if (configuredHead == null
+                || configuredHead.getType() != Material.PLAYER_HEAD) {
+            return null;
+        }
+
+        ItemStack head = configuredHead.clone();
+        head.setAmount(1);
+
+        ItemMeta meta = head.getItemMeta();
+
+        if (meta == null) {
+            return null;
+        }
 
         meta.getPersistentDataContainer().set(
                 temporaryHeadKey,
@@ -120,52 +131,6 @@ public class Rozga implements Listener {
         head.setItemMeta(meta);
 
         return head;
-    }
-
-    // POBIERANIE PRAWDZIWEJ SKÓRKI SANTA
-
-    private void applySantaSkin(Player player) {
-
-        UUID uuid = player.getUniqueId();
-
-        Bukkit.createProfile("Santa").update()
-                .thenAccept(profile -> {
-
-                    Bukkit.getScheduler().runTask(plugin, () -> {
-
-                        if (!player.isOnline()) {
-                            return;
-                        }
-
-                        if (!savedHelmets.containsKey(uuid)) {
-                            return;
-                        }
-
-                        ItemStack helmet =
-                                player.getInventory().getHelmet();
-
-                        if (!isTemporaryHead(helmet)) {
-                            return;
-                        }
-
-                        SkullMeta meta =
-                                (SkullMeta) helmet.getItemMeta();
-
-                        meta.setPlayerProfile(profile);
-
-                        helmet.setItemMeta(meta);
-                    });
-
-                })
-                .exceptionally(error -> {
-
-                    plugin.getLogger().warning(
-                            "Nie udalo sie pobrac skorki Santa: "
-                                    + error.getMessage()
-                    );
-
-                    return null;
-                });
     }
 
     // PRZYWRACANIE ORYGINALNEGO HEŁMU
@@ -219,6 +184,22 @@ public class Rozga implements Listener {
                 attacker.getInventory().getItemInMainHand();
 
         if (!isRozga(weapon)) {
+            return;
+        }
+
+        // SPRAWDZANIE, CZY USTAWIONO GŁÓWKĘ
+
+        ItemStack temporaryHead = createTemporaryHead();
+
+        if (temporaryHead == null) {
+
+            attacker.sendActionBar(
+                    Component.text(
+                            "Najpierw ustaw glowke komenda /ustawglowke!",
+                            NamedTextColor.RED
+                    )
+            );
+
             return;
         }
 
@@ -288,13 +269,9 @@ public class Rozga implements Listener {
                 originalHelmet
         );
 
-        // ZAŁOŻENIE GŁÓWKI SANTA
+        // ZAŁOŻENIE ZAPISANEJ GŁÓWKI
 
-        victim.getInventory().setHelmet(createSantaHead());
-
-        // POBRANIE SKÓRKI SANTA
-
-        applySantaSkin(victim);
+        victim.getInventory().setHelmet(temporaryHead);
 
         // KOMUNIKAT DLA ATAKUJĄCEGO
 
@@ -341,12 +318,12 @@ public class Rozga implements Listener {
             return;
         }
 
-        // Blokada działa tylko podczas aktywnej Rózgi
         if (!savedHelmets.containsKey(player.getUniqueId())) {
             return;
         }
 
-        // Blokowanie kliknięcia w slot hełmu
+        // BLOKOWANIE KLIKNIĘCIA W SLOT HEŁMU
+
         if (event.getView().getType() == InventoryType.CRAFTING
                 && event.getRawSlot() == 5) {
 
@@ -354,7 +331,8 @@ public class Rozga implements Listener {
             return;
         }
 
-        // Blokowanie zakładania hełmu przez shift-click
+        // BLOKOWANIE ZAKŁADANIA HEŁMU PRZEZ SHIFT-CLICK
+
         if (event.isShiftClick()
                 && isHeadItem(event.getCurrentItem())) {
 
@@ -423,10 +401,12 @@ public class Rozga implements Listener {
 
         ItemStack originalHelmet = savedHelmets.remove(uuid);
 
-        // Usunięcie tymczasowej główki z dropu
+        // USUNIĘCIE TYMCZASOWEJ GŁÓWKI Z DROPU
+
         event.getDrops().removeIf(this::isTemporaryHead);
 
-        // Wyrzucenie oryginalnego hełmu
+        // WYRZUCENIE ORYGINALNEGO HEŁMU
+
         event.getDrops().add(originalHelmet);
 
         victim.getInventory().setHelmet(
@@ -441,10 +421,12 @@ public class Rozga implements Listener {
 
         Player player = event.getPlayer();
 
-        // Przywrócenie oryginalnego hełmu
+        // PRZYWRÓCENIE ORYGINALNEGO HEŁMU
+
         restoreHelmet(player);
 
-        // Usunięcie cooldownu
+        // USUNIĘCIE COOLDOWNU
+
         cooldowns.remove(player.getUniqueId());
     }
 }
