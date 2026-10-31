@@ -12,9 +12,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -35,10 +35,10 @@ public final class Main extends JavaPlugin implements Listener {
     private final Map<UUID, Long> cooldowns = new HashMap<>();
 
     private static final long COOLDOWN = 30_000L;
+    private static final int COOLDOWN_TICKS = 600;
 
     @Override
     public void onEnable() {
-
         cloverKey = new NamespacedKey(this, "koniczynka");
 
         getServer().getPluginManager().registerEvents(this, this);
@@ -80,23 +80,23 @@ public final class Main extends JavaPlugin implements Listener {
     private ItemStack createClover() {
 
         ItemStack item = new ItemStack(Material.PAPER);
-
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(
                 Component.text("Koniczynka", NamedTextColor.GREEN)
                         .decorate(TextDecoration.BOLD)
+                        .decoration(TextDecoration.ITALIC, TextDecoration.State.FALSE)
         );
 
         meta.lore(List.of(
-                Component.text("Ta koniczynka po PPM nadaje:", NamedTextColor.GRAY),
-                Component.empty(),
-                Component.text("Efekty zakletego zlotego jablka", NamedTextColor.GOLD),
-                Component.text("Strength II na 5 sekund", NamedTextColor.RED),
-                Component.text("Haste II na 5 sekund", NamedTextColor.YELLOW),
-                Component.empty(),
-                Component.text("Przedmiot jest jednorazowy", NamedTextColor.RED),
-                Component.text("Cooldown: 30 sekund", NamedTextColor.GRAY)
+                noItalic("Ta koniczynka po PPM nadaje:", NamedTextColor.GRAY),
+                Component.empty().decoration(TextDecoration.ITALIC, TextDecoration.State.FALSE),
+                noItalic("Efekty zakletego zlotego jablka", NamedTextColor.GOLD),
+                noItalic("Strength II na 5 sekund", NamedTextColor.RED),
+                noItalic("Haste II na 5 sekund", NamedTextColor.YELLOW),
+                Component.empty().decoration(TextDecoration.ITALIC, TextDecoration.State.FALSE),
+                noItalic("Przedmiot jest jednorazowy", NamedTextColor.RED),
+                noItalic("Cooldown: 30 sekund", NamedTextColor.GRAY)
         ));
 
         meta.setCustomModelData(2);
@@ -110,6 +110,12 @@ public final class Main extends JavaPlugin implements Listener {
         item.setItemMeta(meta);
 
         return item;
+    }
+
+    // TEKST BEZ KURSYWY
+    private Component noItalic(String text, NamedTextColor color) {
+        return Component.text(text, color)
+                .decoration(TextDecoration.ITALIC, TextDecoration.State.FALSE);
     }
 
     // SPRAWDZANIE KONICZYNKI
@@ -154,14 +160,16 @@ public final class Main extends JavaPlugin implements Listener {
 
         Long cooldownEnd = cooldowns.get(player.getUniqueId());
 
+        // SPRAWDZANIE COOLDOWNU
         if (cooldownEnd != null && cooldownEnd > now) {
-            player.sendActionBar(
-                    Component.text("Koniczynka na cooldownie!", NamedTextColor.RED)
-            );
             return;
         }
 
+        // USTAWIANIE COOLDOWNU
         cooldowns.put(player.getUniqueId(), now + COOLDOWN);
+
+        // VANILLA COOLDOWN - 30 SEKUND
+        player.setCooldown(item, COOLDOWN_TICKS);
 
         // EFEKTY
         player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 100, 1, true, true, true));
@@ -171,11 +179,7 @@ public final class Main extends JavaPlugin implements Listener {
         player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 400, 1, true, true, true));
         player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 2400, 3, true, true, true));
 
-        player.sendActionBar(
-                Component.text("Koniczynka nadała Siłę II!", NamedTextColor.GREEN)
-        );
-
-        // USUWANIE PRZEDMIOTU
+        // USUWANIE JEDNEJ KONICZYNKI
         if (item.getAmount() <= 1) {
             player.getInventory().setItemInMainHand(null);
         } else {
