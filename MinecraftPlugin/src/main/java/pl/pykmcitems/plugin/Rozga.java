@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -146,9 +147,9 @@ public class Rozga implements Listener {
             return;
         }
 
-        if (victim.getInventory().getHelmet() == null
-                || victim.getInventory().getHelmet().getType() == Material.AIR) {
+        ItemStack victimHelmet = victim.getInventory().getHelmet();
 
+        if (victimHelmet == null || victimHelmet.getType() == Material.AIR) {
             attacker.sendActionBar(
                     Component.text(
                             "Ten gracz nie ma hełmu!",
@@ -175,15 +176,13 @@ public class Rozga implements Listener {
         attacker.setCooldown(Material.STICK, 2400);
 
         // Zapamiętanie oryginalnego hełmu
-        ItemStack originalHelmet =
-                victim.getInventory().getHelmet().clone();
-
+        ItemStack originalHelmet = victimHelmet.clone();
         savedHelmets.put(victim.getUniqueId(), originalHelmet);
 
         // Założenie zablokowanej główki Santa
         victim.getInventory().setHelmet(createSantaHead());
 
-        // Komunikaty
+        // Komunikat dla atakującego
         attacker.sendActionBar(
                 Component.text("Rózga ", NamedTextColor.GRAY)
                         .decorate(TextDecoration.BOLD)
@@ -193,12 +192,15 @@ public class Rozga implements Listener {
                         ))
         );
 
+        // Komunikat dla trafionego
         victim.sendActionBar(
-                Component.text("Twój hełm został zdjęty na ", NamedTextColor.RED)
-                        .append(Component.text(
-                                "3.5 sekundy!",
-                                NamedTextColor.YELLOW
-                        ))
+                Component.text(
+                        "Twój hełm został zdjęty na ",
+                        NamedTextColor.RED
+                ).append(Component.text(
+                        "3.5 sekundy!",
+                        NamedTextColor.YELLOW
+                ))
         );
 
         // Przywrócenie hełmu po 3,5 sekundy
@@ -227,8 +229,9 @@ public class Rozga implements Listener {
             return;
         }
 
-        // Slot hełmu w widoku ekwipunku gracza
-        if (event.getRawSlot() == 5) {
+        if (event.getView().getType() == InventoryType.CRAFTING
+                && event.getRawSlot() == 5) {
+
             event.setCancelled(true);
         }
     }
@@ -247,7 +250,9 @@ public class Rozga implements Listener {
             return;
         }
 
-        if (event.getRawSlots().contains(5)) {
+        if (event.getView().getType() == InventoryType.CRAFTING
+                && event.getRawSlots().contains(5)) {
+
             event.setCancelled(true);
         }
     }
