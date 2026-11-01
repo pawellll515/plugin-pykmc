@@ -302,6 +302,53 @@ public class Itemy {
         return item;
     }
 
+    // LODOŁAP
+
+    public static ItemStack lodolap(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.SNOWBALL);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(pogrubiony("Lodołap", NamedTextColor.AQUA));
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.text()
+                .append(tekst("Po ", NamedTextColor.GRAY))
+                .append(tekst("trafieniu", NamedTextColor.YELLOW))
+                .append(tekst(" w gracza", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("blokuje mu ", NamedTextColor.GRAY))
+                .append(tekst("używanie elytry", NamedTextColor.RED))
+                .build());
+
+        lore.add(tekst("na 10 sekund", NamedTextColor.GRAY));
+        lore.add(Component.empty());
+
+        lore.add(Component.text()
+                .append(tekst("Po rzucie: ", NamedTextColor.GRAY))
+                .append(tekst("3 sekundy cooldown", NamedTextColor.YELLOW))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("Po trafieniu: ", NamedTextColor.GRAY))
+                .append(tekst("60 sekund cooldown", NamedTextColor.YELLOW))
+                .build());
+
+        meta.lore(lore);
+        meta.setCustomModelData(3);
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "lodolap_item"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
     // HYDRA
 
     public static ItemStack hydra(JavaPlugin plugin) {
