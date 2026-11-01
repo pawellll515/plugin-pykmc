@@ -29,10 +29,7 @@ public class Lodolap implements Listener {
     private final NamespacedKey itemKey;
     private final NamespacedKey projectileKey;
 
-    // Cooldown rzucającego
     private final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
-
-    // Czas zakończenia blokady elytry
     private final Map<UUID, Long> elytraBlocks = new ConcurrentHashMap<>();
 
     public Lodolap(JavaPlugin plugin) {
@@ -51,8 +48,7 @@ public class Lodolap implements Listener {
             return false;
         }
 
-        return item.getItemMeta()
-                .getPersistentDataContainer()
+        return item.getItemMeta().getPersistentDataContainer()
                 .has(itemKey, PersistentDataType.BYTE);
     }
 
@@ -77,9 +73,7 @@ public class Lodolap implements Listener {
                 System.currentTimeMillis() + sekundy * 1000L
         );
 
-        player.sendMessage(
-                "§bLodołap §8» §7Cooldown: §e" + sekundy + " sekund."
-        );
+        player.setCooldown(Material.SNOWBALL, sekundy * 20);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -95,30 +89,21 @@ public class Lodolap implements Listener {
         }
 
         Player player = event.getPlayer();
-        ItemStack item = event.getItem();
 
-        if (!isLodolap(item)) {
+        if (!isLodolap(event.getItem())) {
             return;
         }
 
         event.setCancelled(true);
 
         if (hasCooldown(player)) {
-            long pozostalo = cooldowns.get(player.getUniqueId())
-                    - System.currentTimeMillis();
-
-            player.sendMessage(
-                    "§cMusisz poczekać jeszcze §e"
-                            + Math.max(1, (pozostalo + 999) / 1000)
-                            + "s §czanim użyjesz Lodołapa!"
-            );
             return;
         }
 
-        // Cooldown 3 sekundy po rzuceniu
+        // Vanilla cooldown 3 sekundy
         ustawCooldown(player, 3);
 
-        // Tworzymy pocisk ręcznie, więc przedmiot nie jest zużywany
+        // Tworzymy pocisk ręcznie, bez zużywania przedmiotu
         Snowball snowball = player.getWorld().spawn(
                 player.getEyeLocation(),
                 Snowball.class
@@ -160,18 +145,16 @@ public class Lodolap implements Listener {
             return;
         }
 
-        // Trafienie gracza zmienia cooldown na 60 sekund
+        // Vanilla cooldown 60 sekund po trafieniu
         ustawCooldown(shooter, 60);
 
         UUID targetUUID = target.getUniqueId();
 
-        // Blokada elytry na 10 sekund
         elytraBlocks.put(
                 targetUUID,
                 System.currentTimeMillis() + 10_000L
         );
 
-        // Natychmiast wyłączamy szybowanie
         target.setGliding(false);
 
         target.sendTitle(
@@ -180,7 +163,6 @@ public class Lodolap implements Listener {
                 5, 40, 10
         );
 
-        // Po 10 sekundach usuwamy blokadę
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
 
             Long koniec = elytraBlocks.get(targetUUID);
@@ -226,7 +208,6 @@ public class Lodolap implements Listener {
             return;
         }
 
-        // Blokujemy każdą próbę rozpoczęcia szybowania
         event.setCancelled(true);
     }
 
