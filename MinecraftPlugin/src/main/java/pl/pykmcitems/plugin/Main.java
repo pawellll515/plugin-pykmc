@@ -1,169 +1,177 @@
 
 package pl.pykmcitems.plugin;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+
 import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitTask;
 
-public class Main extends JavaPlugin {
+import java.util.concurrent.ThreadLocalRandom;
 
-    private ZlamaneSerce zlamaneSerce;
+public class KlataMeduzy implements Listener {
 
-    @Override
-    public void onEnable() {
-        getServer().getPluginManager().registerEvents(new Koniczynka(this), this);
-        getServer().getPluginManager().registerEvents(new Rog(this), this);
-        getServer().getPluginManager().registerEvents(new Glodomiot(this), this);
-        getServer().getPluginManager().registerEvents(new Rozpadacz(this), this);
-        getServer().getPluginManager().registerEvents(new Rozga(this), this);
-        getServer().getPluginManager().registerEvents(new SwiatecznaKatana(this), this);
-        getServer().getPluginManager().registerEvents(new ToporWykluczenia(this), this);
-        getServer().getPluginManager().registerEvents(new Hydra(this), this);
-        getServer().getPluginManager().registerEvents(new Lodolap(this), this);
-        getServer().getPluginManager().registerEvents(new Buda(this), this);
+    private final JavaPlugin plugin;
+    private final NamespacedKey klataKey;
+    private final BukkitTask silaTask;
 
-        // Złamane Serce
-        zlamaneSerce = new ZlamaneSerce(this);
+    public KlataMeduzy(JavaPlugin plugin) {
+        this.plugin = plugin;
+        this.klataKey = new NamespacedKey(plugin, "klata_meduzy");
 
-        getLogger().info("PykMCItems zostal wlaczony!");
+        // Odnawianie Siły I co sekundę
+        this.silaTask = plugin.getServer().getScheduler().runTaskTimer(
+                plugin,
+                this::odnawiajSile,
+                0L,
+                20L
+        );
     }
 
-    @Override
-    public void onDisable() {
-        if (zlamaneSerce != null) {
-            zlamaneSerce.cleanup();
+    // SPRAWDZANIE, CZY GRACZ MA KLATĘ MEDUZY
+
+    private boolean maKlate(Player player) {
+        ItemStack chestplate = player.getInventory().getChestplate();
+
+        if (chestplate == null || chestplate.getType() != Material.NETHERITE_CHESTPLATE) {
+            return false;
         }
 
-        getLogger().info("PykMCItems zostal wylaczony!");
+        if (!chestplate.hasItemMeta()) {
+            return false;
+        }
+
+        Byte value = chestplate.getItemMeta()
+                .getPersistentDataContainer()
+                .get(klataKey, PersistentDataType.BYTE);
+
+        return value != null && value == (byte) 1;
     }
 
-    @Override
-    public boolean onCommand(
-            CommandSender sender,
-            Command command,
-            String label,
-            String[] args
-    ) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Tej komendy moze uzyc tylko gracz!");
-            return true;
-        }
+    // STAŁA SIŁA I
 
-        if (command.getName().equalsIgnoreCase("ustawglowke")) {
-            if (!player.hasPermission("pykmcitems.ustawglowke")) {
-                player.sendMessage("§cNie masz uprawnien do tej komendy!");
-                return true;
+    private void odnawiajSile() {
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+
+            if (!maKlate(player)) {
+                continue;
             }
 
-            ItemStack heldItem = player.getInventory().getItemInMainHand();
+            PotionEffect aktualny = player.getPotionEffect(PotionEffectType.STRENGTH);
 
-            if (heldItem.getType() != Material.PLAYER_HEAD) {
-                player.sendMessage("§cMusisz trzymac glowke gracza w glównej rece!");
-                return true;
+            // Nie obniżamy Siły II ani wyższej
+            if (aktualny != null && aktualny.getAmplifier() > 0) {
+                continue;
             }
 
-            getConfig().set("rozga.head", heldItem.clone());
-            saveConfig();
-
-            player.sendMessage("§aPomyslnie zapisano glowke Rózgi!");
-            player.sendMessage("§7Od teraz Rózga bedzie uzywac tej glowki.");
-            return true;
-        }
-
-        if (command.getName().equalsIgnoreCase("koniczyna")) {
-            player.getInventory().addItem(Itemy.koniczynka(this));
-            player.sendMessage("§aOtrzymales Koniczynke!");
-            return true;
-        }
-
-        if (command.getName().equalsIgnoreCase("rog")) {
-            player.getInventory().addItem(Itemy.rogNiebios(this));
-            player.sendMessage("§bOtrzymales Rog Niebios!");
-            return true;
-        }
-
-        if (command.getName().equalsIgnoreCase("glodomiot")) {
-            player.getInventory().addItem(Itemy.glodomiot(this));
-            player.sendMessage("§6Otrzymales Glodomiot!");
-            return true;
-        }
-
-        if (command.getName().equalsIgnoreCase("rozpadacz")) {
-            player.getInventory().addItem(Itemy.rozpadacz(this));
-            player.sendMessage("§4Otrzymales Rozpadacz!");
-            return true;
-        }
-
-        if (command.getName().equalsIgnoreCase("rozga")) {
-            player.getInventory().addItem(Itemy.rozga(this));
-            player.sendMessage("§7Otrzymales Rozge!");
-            return true;
-        }
-
-        if (command.getName().equalsIgnoreCase("katana")) {
-            player.getInventory().addItem(Itemy.swiatecznaKatana(this));
-            player.sendMessage("§aOtrzymales Świąteczną Katanę!");
-            return true;
-        }
-
-        if (command.getName().equalsIgnoreCase("topor")) {
-            if (!player.hasPermission("pykmcitems.topor")) {
-                player.sendMessage("§cNie masz uprawnien do tej komendy!");
-                return true;
+            // Nie skracamy czasu istniejącej Siły I
+            if (aktualny != null && aktualny.getDuration() > 40) {
+                continue;
             }
 
-            player.getInventory().addItem(Itemy.toporWykluczenia(this));
-            player.sendMessage("§aOtrzymales §6§lTopór Wykluczenia§a!");
-            return true;
+            player.addPotionEffect(new PotionEffect(
+                    PotionEffectType.STRENGTH,
+                    40,
+                    0,
+                    true,
+                    false,
+                    true
+            ));
+        }
+    }
+
+    // PIORUN MEDUZY
+
+    @EventHandler
+    public void onAttack(EntityDamageByEntityEvent event) {
+
+        if (!(event.getDamager() instanceof Player attacker)) {
+            return;
         }
 
-        if (command.getName().equalsIgnoreCase("hydra")) {
-            if (!player.hasPermission("pykmcitems.hydra")) {
-                player.sendMessage("§cNie masz uprawnien do tej komendy!");
-                return true;
-            }
-
-            player.getInventory().addItem(Itemy.hydra(this));
-            player.sendMessage("§aOtrzymales §1§lHydre§a!");
-            return true;
+        if (!(event.getEntity() instanceof Player victim)) {
+            return;
         }
 
-        if (command.getName().equalsIgnoreCase("lodolap")) {
-            if (!player.hasPermission("pykmcitems.lodolap")) {
-                player.sendMessage("§cNie masz uprawnien do tej komendy!");
-                return true;
-            }
-
-            player.getInventory().addItem(Itemy.lodolap(this));
-            player.sendMessage("§aOtrzymales §b§lLodołap§a!");
-            return true;
+        if (!maKlate(attacker)) {
+            return;
         }
 
-        if (command.getName().equalsIgnoreCase("buda")) {
-            if (!player.hasPermission("pykmcitems.buda")) {
-                player.sendMessage("§cNie masz uprawnien do tej komendy!");
-                return true;
-            }
-
-            player.getInventory().addItem(Itemy.buda(this));
-            player.sendMessage("§aOtrzymales §eBudę§a!");
-            return true;
+        // 3% szansy
+        if (ThreadLocalRandom.current().nextDouble() >= 0.03) {
+            return;
         }
 
-        if (command.getName().equalsIgnoreCase("zlamane")) {
-            if (!player.hasPermission("pykmcitems.zlamane")) {
-                player.sendMessage("§cNie masz uprawnien do tej komendy!");
-                return true;
-            }
+        // Wizualny piorun bez standardowych obrażeń
+        victim.getWorld().strikeLightningEffect(victim.getLocation());
 
-            player.getInventory().addItem(ZlamaneSerce.createItem(this));
-            player.sendMessage("§aOtrzymales §c§lZlamane Serce§a!");
-            return true;
+        // Dodatkowe 4 serca obrażeń
+        victim.damage(8.0, attacker);
+
+        attacker.sendActionBar(
+                Component.text(
+                        "Uderzyłeś piorunem przeciwnika",
+                        NamedTextColor.GREEN
+                )
+        );
+
+        victim.sendActionBar(
+                Component.text(
+                        "Zostałeś uderzony piorunem",
+                        NamedTextColor.RED
+                )
+        );
+    }
+
+    // NIEWIDZIALNOŚĆ PO OTRZYMANIU OBRAŻEŃ
+
+    @EventHandler
+    public void onDamage(EntityDamageEvent event) {
+
+        if (!(event.getEntity() instanceof Player player)) {
+            return;
         }
 
-        return true;
+        if (!maKlate(player)) {
+            return;
+        }
+
+        if (event.isCancelled() || event.getFinalDamage() <= 0) {
+            return;
+        }
+
+        // 2% szansy
+        if (ThreadLocalRandom.current().nextDouble() >= 0.02) {
+            return;
+        }
+
+        // Niewidzialność na 30 sekund
+        player.addPotionEffect(new PotionEffect(
+                PotionEffectType.INVISIBILITY,
+                600,
+                0,
+                true,
+                false,
+                true
+        ));
+    }
+
+    // WYŁĄCZANIE
+
+    public void cleanup() {
+        if (silaTask != null) {
+            silaTask.cancel();
+        }
     }
 }
