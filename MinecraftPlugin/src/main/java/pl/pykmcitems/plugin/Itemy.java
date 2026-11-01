@@ -457,4 +457,50 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
+    
+    // ZŁAMANE SERCE
+
+    public static ItemStack zlamaneSerce(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.AMETHYST_SHARD);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(pogrubiony("Złamane Serce", NamedTextColor.RED));
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.text()
+                .append(tekst("Po ", NamedTextColor.GRAY))
+                .append(tekst("PPM", NamedTextColor.GREEN))
+                .append(tekst(" blokuje przeciwnikowi perły", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("na ", NamedTextColor.GRAY))
+                .append(tekst("10 sekund", NamedTextColor.YELLOW))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("oraz przywołuje ", NamedTextColor.GRAY))
+                .append(tekst("5 Kupidynów", NamedTextColor.RED))
+                .build());
+
+        lore.add(Component.empty());
+
+        lore.add(Component.text()
+                .append(tekst("Cooldown: ", NamedTextColor.GRAY))
+                .append(tekst("1 minuta 30 sekund", NamedTextColor.YELLOW))
+                .build());
+
+        meta.lore(lore);
+        meta.setCustomModelData(3);
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "zlamane_serce"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
 }
