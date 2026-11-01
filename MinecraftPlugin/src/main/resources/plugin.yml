@@ -60,6 +60,10 @@ commands:
     description: Daje przedmiot Buda
     permission: pykmcitems.buda
 
+  zlamane:
+    description: Daje Zlamane Serce
+    permission: pykmcitems.zlamane
+
 permissions:
   pykmcitems.koniczyna:
     description: Pozwala nadawac Koniczynke
@@ -103,4 +107,8 @@ permissions:
     
   pykmcitems.buda:
     description: Pozwala nadawac Bude
+    default: op
+
+  pykmcitems.zlamane:
+    description: Pozwala nadawac Zlamane Serce
     default: op
