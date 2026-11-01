@@ -154,7 +154,9 @@ public class Buda implements Listener {
         target.sendMessage("§eGracz §f" + attacker.getName()
                 + " §eużył na tobie Budy!");
 
+        // Sprawdzanie granic co tick, czyli 20 razy na sekundę.
         new BukkitRunnable() {
+            int ticks = 0;
             int time = FIGHT_TIME;
 
             @Override
@@ -174,14 +176,20 @@ public class Buda implements Listener {
 
                 applyVerticalLimits(cage);
 
-                time--;
+                ticks++;
 
-                if (time <= 0) {
-                    endFight(cage, "§aWalka dobiegła końca!");
-                    cancel();
+                // Odliczanie czasu walki co 20 ticków.
+                if (ticks >= 20) {
+                    ticks = 0;
+                    time--;
+
+                    if (time <= 0) {
+                        endFight(cage, "§aWalka dobiegła końca!");
+                        cancel();
+                    }
                 }
             }
-        }.runTaskTimer(plugin, 20L, 20L);
+        }.runTaskTimer(plugin, 1L, 1L);
     }
 
     private void applyVerticalLimits(Cage cage) {
@@ -195,12 +203,18 @@ public class Buda implements Listener {
         }
 
         double y = player.getLocation().getY();
+        double topY = y + player.getHeight();
+
         Vector velocity = player.getVelocity();
 
-        if (y <= floorY && velocity.getY() < 0) {
+        // Niewidzialna podłoga 10 bloków pod graczem.
+        if (y <= floorY + 0.15) {
             velocity.setY(0.45);
             player.setVelocity(velocity);
-        } else if (y + player.getHeight() >= roofY && velocity.getY() > 0) {
+        }
+
+        // Niewidzialny dach 10 bloków nad graczem.
+        else if (topY >= roofY - 0.15) {
             velocity.setY(-0.45);
             player.setVelocity(velocity);
         }
