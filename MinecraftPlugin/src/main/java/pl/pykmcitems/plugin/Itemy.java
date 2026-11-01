@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
@@ -12,6 +13,9 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.meta.trim.ArmorTrim;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
+import org.bukkit.inventory.meta.trim.TrimPattern;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -422,6 +426,7 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
+
     // BUDA
 
     public static ItemStack buda(JavaPlugin plugin) {
@@ -457,7 +462,7 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
-    
+
     // ZŁAMANE SERCE
 
     public static ItemStack zlamaneSerce(JavaPlugin plugin) {
@@ -496,6 +501,55 @@ public class Itemy {
 
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "zlamane_serce"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    // KLATA MEDUZY
+
+    public static ItemStack klataMeduzy(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.NETHERITE_CHESTPLATE);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(pogrubiony("Klata Meduzy", NamedTextColor.AQUA));
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.empty());
+        lore.add(pogrubiony("Właściwości:", NamedTextColor.AQUA));
+
+        lore.add(Component.text()
+                .append(tekst("- Szansa na ", NamedTextColor.GRAY))
+                .append(tekst("Niewidzialność", NamedTextColor.WHITE))
+                .append(tekst(" na 30 s przy otrzymaniu obrażeń ", NamedTextColor.GRAY))
+                .append(tekst("(ON)", NamedTextColor.GREEN))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("- Szansa na uderzenie ", NamedTextColor.GRAY))
+                .append(tekst("potężnego pioruna", NamedTextColor.AQUA))
+                .append(tekst(" w przeciwnika", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("- Stały efekt ", NamedTextColor.GRAY))
+                .append(tekst("Siły I", NamedTextColor.RED))
+                .build());
+
+        meta.lore(lore);
+        meta.setCustomModelData(3);
+
+        meta.addEnchant(Enchantment.PROTECTION, 5, true);
+        meta.addEnchant(Enchantment.UNBREAKING, 4, true);
+
+        meta.setTrim(new ArmorTrim(TrimMaterial.DIAMOND, TrimPattern.FLOW));
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "klata_meduzy"),
                 PersistentDataType.BYTE,
                 (byte) 1
         );
