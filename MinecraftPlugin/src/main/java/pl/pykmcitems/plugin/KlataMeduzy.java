@@ -13,9 +13,9 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -39,9 +39,9 @@ public class KlataMeduzy implements Listener {
         );
     }
 
-    // SPRAWDZANIE KLATY MEDUZY
+    // SPRAWDZANIE, CZY GRACZ MA KLATĘ MEDUZY
 
-    private boolean maKl ate(Player player) {
+    private boolean maKlate(Player player) {
         ItemStack chestplate = player.getInventory().getChestplate();
 
         if (chestplate == null || chestplate.getType() != Material.NETHERITE_CHESTPLATE) {
@@ -64,7 +64,7 @@ public class KlataMeduzy implements Listener {
     private void odnawiajSile() {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
 
-            if (!maKl ate(player)) {
+            if (!maKlate(player)) {
                 continue;
             }
 
@@ -75,7 +75,7 @@ public class KlataMeduzy implements Listener {
                 continue;
             }
 
-            // Nie skracamy istniejącej Siły I
+            // Nie skracamy czasu istniejącej Siły I
             if (aktualny != null && aktualny.getDuration() > 40) {
                 continue;
             }
@@ -104,7 +104,7 @@ public class KlataMeduzy implements Listener {
             return;
         }
 
-        if (!maKl ate(attacker)) {
+        if (!maKlate(attacker)) {
             return;
         }
 
@@ -113,7 +113,7 @@ public class KlataMeduzy implements Listener {
             return;
         }
 
-        // Efekt wizualny pioruna bez jego standardowych obrażeń
+        // Wizualny piorun bez standardowych obrażeń
         victim.getWorld().strikeLightningEffect(victim.getLocation());
 
         // Dodatkowe 4 serca obrażeń
@@ -143,7 +143,7 @@ public class KlataMeduzy implements Listener {
             return;
         }
 
-        if (!maKl ate(player)) {
+        if (!maKlate(player)) {
             return;
         }
 
@@ -156,8 +156,7 @@ public class KlataMeduzy implements Listener {
             return;
         }
 
-        // Niewidzialność na 30 sekund.
-        // Efekt mikstury pozostawia widoczną zbroję i przedmioty w rękach.
+        // Niewidzialność na 30 sekund
         player.addPotionEffect(new PotionEffect(
                 PotionEffectType.INVISIBILITY,
                 600,
