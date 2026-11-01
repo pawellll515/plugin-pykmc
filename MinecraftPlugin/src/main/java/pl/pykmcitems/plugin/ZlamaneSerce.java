@@ -6,10 +6,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.attribute.Attribute;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vex;
@@ -31,16 +27,22 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
-public class ZlamaneSerce implements Listener, CommandExecutor {
+public class ZlamaneSerce implements Listener {
 
     private final JavaPlugin plugin;
     private final NamespacedKey itemKey;
 
+    // Cooldown używającego gracza
     private final Set<UUID> cooldowns = new HashSet<>();
+
+    // Blokada pereł: UUID gracza -> pozostałe sekundy
     private final Map<UUID, Integer> pearlBlocks = new HashMap<>();
 
-    // UUID Kupidyna -> UUID jego celu
+    // Kupidyni: UUID Vexa -> UUID wybranego celu
     private final Map<UUID, UUID> cupids = new HashMap<>();
+
+    // Czas zniknięcia Kupidyna
+    private final Map<UUID, Long> cupidExpiry = new HashMap<>();
 
     public ZlamaneSerce(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -48,28 +50,37 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
 
         Bukkit.getPluginManager().registerEvents(this, plugin);
 
-        startCupidTask();
         startPearlBlockTask();
+        startCupidTask();
     }
+
+    // =====================================================
+    // TWORZENIE PRZEDMIOTU
+    // =====================================================
 
     public static ItemStack createItem(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.AMETHYST_SHARD);
         ItemMeta meta = item.getItemMeta();
 
-        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&',
-                "&c&lZłamane Serce"));
+        meta.setDisplayName(ChatColor.translateAlternateColorCodes(
+                '&', "&c&lZłamane Serce"
+        ));
 
         meta.setLore(Arrays.asList(
-                ChatColor.translateAlternateColorCodes('&',
-                        "&7Po &aPPM &cblokuje &7przeciwnikowi perły na &e10 sekund"),
-                ChatColor.translateAlternateColorCodes('&',
-                        "&7oraz przywołuje &c5 kupidynów &7którzy go biją"),
+                ChatColor.translateAlternateColorCodes(
+                        '&', "&7Po &aPPM &cblokuje &7przeciwnikowi perły na &e10 sekund"
+                ),
+                ChatColor.translateAlternateColorCodes(
+                        '&', "&7oraz przywołuje &c5 kupidynów &7którzy go biją"
+                ),
                 "",
-                ChatColor.translateAlternateColorCodes('&',
-                        "&7Cooldown: &e1 minuta 30 sekund")
+                ChatColor.translateAlternateColorCodes(
+                        '&', "&7Cooldown: &e1 minuta 30 sekund"
+                )
         ));
 
         meta.setCustomModelData(3);
+
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "zlamane_serce"),
                 PersistentDataType.BYTE,
@@ -89,34 +100,17 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
             return false;
         }
 
-        Byte value = item.getItemMeta().getPersistentDataContainer().get(
-                itemKey,
-                PersistentDataType.BYTE
-        );
+        Byte value = item.getItemMeta()
+                .getPersistentDataContainer()
+                .get(itemKey, PersistentDataType.BYTE);
 
         return value != null && value == (byte) 1;
     }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command,
-                             String label, String[] args) {
+    // =====================================================
+    // UŻYCIE PRZEDMIOTU NA GRACZU
+    // =====================================================
 
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Tej komendy może użyć tylko gracz.");
-            return true;
-        }
-
-        if (!player.hasPermission("pykmcitems.zlamane")) {
-            player.sendMessage(ChatColor.RED + "Nie masz uprawnień!");
-            return true;
-        }
-
-        player.getInventory().addItem(createItem(plugin));
-        player.sendMessage(ChatColor.GREEN + "Otrzymałeś Złamane Serce!");
-        return true;
-    }
-
-    // Użycie PPM na graczu
     @EventHandler
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) {
@@ -135,6 +129,10 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
 
         event.setCancelled(true);
 
+        if (attacker.equals(target)) {
+            return;
+        }
+
         if (cooldowns.contains(attacker.getUniqueId())) {
             attacker.sendActionBar(Component.text(
                     ChatColor.RED + "Złamane Serce jest na cooldownie!"
@@ -149,19 +147,17 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
             return;
         }
 
-        if (attacker.equals(target)) {
-            return;
-        }
-
+        // Cooldown 90 sekund
         cooldowns.add(attacker.getUniqueId());
-
         attacker.setCooldown(Material.AMETHYST_SHARD, 90 * 20);
 
+        // Blokada pereł na 10 sekund
         pearlBlocks.put(target.getUniqueId(), 10);
 
         attacker.sendActionBar(Component.text(
                 ChatColor.RED + "" + ChatColor.BOLD
-                        + "Złamane Serce " + ChatColor.GRAY + "zablokowało perły!"
+                        + "Złamane Serce " + ChatColor.GRAY
+                        + "zablokowało perły!"
         ));
 
         target.sendActionBar(Component.text(
@@ -169,15 +165,19 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
                         + ChatColor.YELLOW + "10 sekund!"
         ));
 
+        // Przywołanie Kupidynów
         spawnCupids(target);
 
-        // Cooldown 90 sekund
+        // Koniec cooldownu po 90 sekundach
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             cooldowns.remove(attacker.getUniqueId());
         }, 90 * 20L);
     }
 
-    // Blokowanie używania pereł
+    // =====================================================
+    // BLOKOWANIE PEREŁ
+    // =====================================================
+
     @EventHandler
     public void onPearlUse(PlayerInteractEvent event) {
         if (event.getItem() == null
@@ -198,7 +198,6 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
         ));
     }
 
-    // Dodatkowe zabezpieczenie przed wyrzuceniem perły
     @EventHandler
     public void onPearlLaunch(ProjectileLaunchEvent event) {
         if (!(event.getEntity() instanceof EnderPearl pearl)) {
@@ -209,15 +208,21 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
             return;
         }
 
-        if (pearlBlocks.containsKey(player.getUniqueId())) {
-            event.setCancelled(true);
-            player.sendActionBar(Component.text(
-                    ChatColor.RED + "Nie możesz teraz używać pereł!"
-            ));
+        if (!pearlBlocks.containsKey(player.getUniqueId())) {
+            return;
         }
+
+        event.setCancelled(true);
+
+        player.sendActionBar(Component.text(
+                ChatColor.RED + "Nie możesz teraz używać pereł!"
+        ));
     }
 
-    // Przywołanie pięciu Kupidynów wokół celu
+    // =====================================================
+    // PRZYWOŁYWANIE KUPIDYNÓW
+    // =====================================================
+
     private void spawnCupids(Player target) {
         double radius = 1.0;
 
@@ -235,21 +240,30 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
             vex.setCustomNameVisible(true);
             vex.setPersistent(false);
             vex.setRemoveWhenFarAway(false);
+
+            // Każdy Kupidyn ma przypisany tylko jeden cel
             vex.setTarget(target);
 
-            cupids.put(vex.getUniqueId(), target.getUniqueId());
+            UUID vexId = vex.getUniqueId();
+
+            cupids.put(vexId, target.getUniqueId());
+
+            // Każdy Kupidyn znika po własnych 30 sekundach
+            cupidExpiry.put(
+                    vexId,
+                    System.currentTimeMillis() + 30_000L
+            );
         }
     }
 
-    // Pilnowanie celu Kupidynów i ich czasu życia
+    // =====================================================
+    // PILNOWANIE KUPIDYNÓW
+    // =====================================================
+
     private void startCupidTask() {
         new BukkitRunnable() {
-            private int seconds = 0;
-
             @Override
             public void run() {
-                seconds++;
-
                 Iterator<Map.Entry<UUID, UUID>> iterator =
                         cupids.entrySet().iterator();
 
@@ -259,45 +273,53 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
                     UUID vexId = entry.getKey();
                     UUID targetId = entry.getValue();
 
-                    Vex vex = (Vex) Bukkit.getEntity(vexId);
+                    if (!(Bukkit.getEntity(vexId) instanceof Vex vex)
+                            || !vex.isValid()) {
+                        cupidExpiry.remove(vexId);
+                        iterator.remove();
+                        continue;
+                    }
+
                     Player target = Bukkit.getPlayer(targetId);
 
-                    if (vex == null || !vex.isValid()) {
-                        iterator.remove();
-                        continue;
-                    }
-
-                    if (target == null || !target.isOnline()
-                            || target.isDead()) {
+                    // Cel nie istnieje, umarł lub wyszedł z serwera
+                    if (target == null || !target.isOnline() || target.isDead()) {
                         vex.remove();
+                        cupidExpiry.remove(vexId);
                         iterator.remove();
                         continue;
                     }
 
-                    if (seconds >= 30) {
+                    Long expiry = cupidExpiry.get(vexId);
+
+                    // Minęło 30 sekund
+                    if (expiry == null
+                            || System.currentTimeMillis() >= expiry) {
                         vex.remove();
+                        cupidExpiry.remove(vexId);
                         iterator.remove();
                         continue;
                     }
 
+                    // Jeśli cel zmienił świat, Kupidyn podąża za nim
                     if (!target.getWorld().equals(vex.getWorld())) {
                         vex.teleport(target.getLocation());
                     }
 
+                    // Przywracanie właściwego celu
                     if (vex.getTarget() == null
                             || !vex.getTarget().getUniqueId().equals(targetId)) {
                         vex.setTarget(target);
                     }
                 }
-
-                if (cupids.isEmpty() && seconds >= 30) {
-                    cancel();
-                }
             }
-        }.runTaskTimer(plugin, 20L, 20L);
+        }.runTaskTimer(plugin, 20L, 10L);
     }
 
-    // Kupidyni nie mogą wybierać innych graczy
+    // =====================================================
+    // KUPIDYNI NIE MOGĄ ATAKOWAĆ INNYCH GRACZY
+    // =====================================================
+
     @EventHandler
     public void onCupidTarget(EntityTargetLivingEntityEvent event) {
         if (!(event.getEntity() instanceof Vex vex)) {
@@ -316,7 +338,10 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
         }
     }
 
-    // 0.5 serca true damage za trafienie Kupidyna
+    // =====================================================
+    // OBRAŻENIA KUPIDYNÓW - TRUE DAMAGE
+    // =====================================================
+
     @EventHandler
     public void onCupidDamage(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Vex vex)) {
@@ -329,22 +354,30 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
             return;
         }
 
+        // Kupidyn nie może zranić nikogo poza swoim celem
         if (!(event.getEntity() instanceof Player victim)
                 || !victim.getUniqueId().equals(targetId)) {
             event.setCancelled(true);
             return;
         }
 
+        // Zatrzymujemy zwykłe obrażenia Vexa
         event.setCancelled(true);
 
-        // Bezpośrednie odjęcie 1 punktu zdrowia omija pancerz.
-        if (!victim.isDead()) {
-            double newHealth = Math.max(0.0, victim.getHealth() - 1.0);
-            victim.setHealth(newHealth);
+        if (victim.isDead()) {
+            return;
         }
+
+        // 1 punkt zdrowia = 0,5 serca
+        // Bezpośrednia zmiana zdrowia omija redukcję pancerza.
+        double newHealth = Math.max(0.0, victim.getHealth() - 1.0);
+        victim.setHealth(newHealth);
     }
 
-    // Odliczanie blokady pereł
+    // =====================================================
+    // ODLiczanie BLOKADY PEREŁ
+    // =====================================================
+
     private void startPearlBlockTask() {
         new BukkitRunnable() {
             @Override
@@ -377,7 +410,10 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
         }.runTaskTimer(plugin, 20L, 20L);
     }
 
-    // Czyszczenie po śmierci gracza
+    // =====================================================
+    // ŚMIERĆ GRACZA
+    // =====================================================
+
     @EventHandler
     public void onDeath(EntityDeathEvent event) {
         if (!(event.getEntity() instanceof Player player)) {
@@ -388,18 +424,27 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
 
         cooldowns.remove(playerId);
         pearlBlocks.remove(playerId);
+
         removeCupidsFor(playerId);
     }
 
-    // Czyszczenie po wyjściu gracza
+    // =====================================================
+    // WYJŚCIE GRACZA
+    // =====================================================
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
 
         cooldowns.remove(playerId);
         pearlBlocks.remove(playerId);
+
         removeCupidsFor(playerId);
     }
+
+    // =====================================================
+    // USUWANIE KUPIDYNÓW PRZYPISANYCH DO GRACZA
+    // =====================================================
 
     private void removeCupidsFor(UUID targetId) {
         Iterator<Map.Entry<UUID, UUID>> iterator =
@@ -409,16 +454,23 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
             Map.Entry<UUID, UUID> entry = iterator.next();
 
             if (entry.getValue().equals(targetId)) {
-                var entity = Bukkit.getEntity(entry.getKey());
+                UUID vexId = entry.getKey();
+
+                var entity = Bukkit.getEntity(vexId);
 
                 if (entity != null) {
                     entity.remove();
                 }
 
+                cupidExpiry.remove(vexId);
                 iterator.remove();
             }
         }
     }
+
+    // =====================================================
+    // CZYSZCZENIE PRZY WYŁĄCZANIU PLUGINU
+    // =====================================================
 
     public void cleanup() {
         for (UUID vexId : cupids.keySet()) {
@@ -430,6 +482,7 @@ public class ZlamaneSerce implements Listener, CommandExecutor {
         }
 
         cupids.clear();
+        cupidExpiry.clear();
         cooldowns.clear();
         pearlBlocks.clear();
     }
