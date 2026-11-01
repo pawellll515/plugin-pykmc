@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.enchantments.Enchantment;
@@ -546,7 +547,11 @@ public class Itemy {
         meta.addEnchant(Enchantment.PROTECTION, 5, true);
         meta.addEnchant(Enchantment.UNBREAKING, 4, true);
 
-        meta.setTrim(new ArmorTrim(TrimMaterial.DIAMOND, TrimPattern.FLOW));
+        if (meta instanceof ArmorMeta armorMeta) {
+            armorMeta.setTrim(
+                    new ArmorTrim(TrimMaterial.DIAMOND, TrimPattern.FLOW)
+            );
+        }
 
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "klata_meduzy"),
