@@ -56,6 +56,10 @@ commands:
     usage: /lodolap
     permission: pykmcitems.lodolap
 
+  buda:
+    description: Daje przedmiot Buda
+    permission: pykmcitems.buda
+
 permissions:
   pykmcitems.koniczyna:
     description: Pozwala nadawac Koniczynke
@@ -95,4 +99,8 @@ permissions:
 
   pykmcitems.lodolap:
     description: Pozwala nadawac Lodolap
+    default: op
+    
+  pykmcitems.buda:
+    description: Pozwala nadawac Bude
     default: op
