@@ -19,6 +19,7 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SwiatecznaKatana(this), this);
         getServer().getPluginManager().registerEvents(new ToporWykluczenia(this), this);
         getServer().getPluginManager().registerEvents(new Hydra(this), this);
+        getServer().getPluginManager().registerEvents(new Lodolap(this), this);
 
         getLogger().info("PykMCItems zostal wlaczony!");
     }
@@ -116,6 +117,17 @@ public class Main extends JavaPlugin {
 
             player.getInventory().addItem(Itemy.hydra(this));
             player.sendMessage("§aOtrzymales §1§lHydre§a!");
+            return true;
+        }
+
+        if (command.getName().equalsIgnoreCase("lodolap")) {
+            if (!player.hasPermission("pykmcitems.lodolap")) {
+                player.sendMessage("§cNie masz uprawnien do tej komendy!");
+                return true;
+            }
+
+            player.getInventory().addItem(Itemy.lodolap(this));
+            player.sendMessage("§aOtrzymales §b§lLodołap§a!");
             return true;
         }
 
