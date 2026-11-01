@@ -10,6 +10,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin {
 
+    private ZlamaneSerce zlamaneSerce;
+
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(new Koniczynka(this), this);
@@ -23,11 +25,18 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new Lodolap(this), this);
         getServer().getPluginManager().registerEvents(new Buda(this), this);
 
+        // Złamane Serce
+        zlamaneSerce = new ZlamaneSerce(this);
+
         getLogger().info("PykMCItems zostal wlaczony!");
     }
 
     @Override
     public void onDisable() {
+        if (zlamaneSerce != null) {
+            zlamaneSerce.cleanup();
+        }
+
         getLogger().info("PykMCItems zostal wylaczony!");
     }
 
@@ -141,6 +150,17 @@ public class Main extends JavaPlugin {
 
             player.getInventory().addItem(Itemy.buda(this));
             player.sendMessage("§aOtrzymales §eBudę§a!");
+            return true;
+        }
+
+        if (command.getName().equalsIgnoreCase("zlamane")) {
+            if (!player.hasPermission("pykmcitems.zlamane")) {
+                player.sendMessage("§cNie masz uprawnien do tej komendy!");
+                return true;
+            }
+
+            player.getInventory().addItem(ZlamaneSerce.createItem(this));
+            player.sendMessage("§aOtrzymales §c§lZlamane Serce§a!");
             return true;
         }
 
