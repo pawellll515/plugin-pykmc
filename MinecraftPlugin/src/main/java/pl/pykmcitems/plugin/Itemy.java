@@ -422,4 +422,39 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
+    // BUDA
+
+    public static ItemStack buda(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.CHAIN);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(pogrubiony("Buda", NamedTextColor.YELLOW));
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.text()
+                .append(tekst("Po ", NamedTextColor.GRAY))
+                .append(tekst("PPM na gracza", NamedTextColor.GREEN))
+                .build());
+
+        lore.add(tekst("zamyka go w klatce 1v1", NamedTextColor.GRAY));
+        lore.add(Component.empty());
+
+        lore.add(Component.text()
+                .append(tekst("Cooldown: ", NamedTextColor.GRAY))
+                .append(tekst("1 minuta 30 sekund", NamedTextColor.YELLOW))
+                .build());
+
+        meta.lore(lore);
+        meta.setCustomModelData(3);
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "buda"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
 }
