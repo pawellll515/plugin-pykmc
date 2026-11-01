@@ -1,4 +1,3 @@
-
 name: PykMCItems
 version: 1.0.0
 main: pl.pykmcitems.plugin.Main
@@ -26,7 +25,7 @@ commands:
     description: Nadaje Rozpadacz
     usage: /rozpadacz
     permission: pykmcitems.rozpadacz
-    
+
   topor:
     description: Daje Topór Wykluczenia
     usage: /topor
@@ -46,11 +45,16 @@ commands:
     description: Nadaje Swiateczna Katane
     usage: /katana
     permission: pykmcitems.katana
-    
+
   hydra:
     description: Nadaje Hydre
     usage: /hydra
     permission: pykmcitems.hydra
+
+  lodolap:
+    description: Nadaje Lodolap
+    usage: /lodolap
+    permission: pykmcitems.lodolap
 
 permissions:
   pykmcitems.koniczyna:
@@ -64,7 +68,7 @@ permissions:
   pykmcitems.topor:
     description: Pozwala używać komendy topor
     default: op
-    
+
   pykmcitems.rog:
     description: Pozwala nadawac Rog Niebios
     default: op
@@ -87,4 +91,8 @@ permissions:
 
   pykmcitems.katana:
     description: Pozwala nadawac Swiateczna Katane
+    default: op
+
+  pykmcitems.lodolap:
+    description: Pozwala nadawac Lodolap
     default: op
