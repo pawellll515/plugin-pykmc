@@ -1,3 +1,4 @@
+
 name: PykMCItems
 version: 1.0.0
 main: pl.pykmcitems.plugin.Main
@@ -64,6 +65,11 @@ commands:
     description: Daje Zlamane Serce
     permission: pykmcitems.zlamane
 
+  meduza:
+    description: Nadaje Klata Meduzy
+    usage: /meduza
+    permission: pykmcitems.meduza
+
 permissions:
   pykmcitems.koniczyna:
     description: Pozwala nadawac Koniczynke
@@ -104,11 +110,15 @@ permissions:
   pykmcitems.lodolap:
     description: Pozwala nadawac Lodolap
     default: op
-    
+
   pykmcitems.buda:
     description: Pozwala nadawac Bude
     default: op
 
   pykmcitems.zlamane:
     description: Pozwala nadawac Zlamane Serce
+    default: op
+
+  pykmcitems.meduza:
+    description: Pozwala nadawac Klata Meduzy
     default: op
