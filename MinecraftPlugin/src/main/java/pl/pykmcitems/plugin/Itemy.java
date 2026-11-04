@@ -510,7 +510,6 @@ public class Itemy {
         return item;
     }
 
-
     // KLATA MEDUZY
 
     public static ItemStack klataMeduzy(JavaPlugin plugin) {
@@ -563,20 +562,48 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
-    public static ItemStack berloDrakuli(Main plugin) {
+
+    // BERŁO DRAKULI
+
+    public static ItemStack berloDrakuli(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.STICK);
         ItemMeta meta = item.getItemMeta();
 
-        meta.setCustomModelData(1);
-        meta.setDisplayName("§x§E§A§0§0§0§0Berło Drakuli");
+        meta.displayName(Component.text("Berło Drakuli")
+                .color(net.kyori.adventure.text.format.TextColor.fromHexString("#EA0000"))
+                .decoration(TextDecoration.ITALIC, false));
 
-        meta.setLore(Arrays.asList(
-                "",
-                "§7Po użyciu zmniejszasz swoją postać",
-                "§7o §e50% §7na §e15s",
-                "",
-                "§7Cooldown: §e2min"
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.empty());
+
+        lore.add(tekst(
+                "Po użyciu zmniejszasz swoją postać",
+                NamedTextColor.GRAY
         ));
+
+        lore.add(Component.text()
+                .append(tekst("o ", NamedTextColor.GRAY))
+                .append(tekst("50%", NamedTextColor.YELLOW))
+                .append(tekst(" na ", NamedTextColor.GRAY))
+                .append(tekst("15s", NamedTextColor.YELLOW))
+                .build());
+
+        lore.add(Component.empty());
+
+        lore.add(Component.text()
+                .append(tekst("Cooldown: ", NamedTextColor.GRAY))
+                .append(tekst("2min", NamedTextColor.YELLOW))
+                .build());
+
+        meta.lore(lore);
+        meta.setCustomModelData(1);
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "berlo_drakuli"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
 
         item.setItemMeta(meta);
         return item;
