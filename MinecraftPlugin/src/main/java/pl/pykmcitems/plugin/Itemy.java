@@ -563,4 +563,22 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
+    public static ItemStack berloDrakuli(Main plugin) {
+        ItemStack item = new ItemStack(Material.STICK);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.setCustomModelData(1);
+        meta.setDisplayName("§x§E§A§0§0§0§0Berło Drakuli");
+
+        meta.setLore(Arrays.asList(
+                "",
+                "§7Po użyciu zmniejszasz swoją postać",
+                "§7o §e50% §7na §e15s",
+                "",
+                "§7Cooldown: §e2min"
+        ));
+
+        item.setItemMeta(meta);
+        return item;
+    }
 }
