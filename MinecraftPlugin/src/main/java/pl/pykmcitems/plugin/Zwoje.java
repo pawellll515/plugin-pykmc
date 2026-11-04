@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
@@ -8,8 +9,6 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.ItemStack;
@@ -32,41 +31,17 @@ public class Zwoje implements Listener {
         this.plugin = plugin;
     }
 
-    private enum TypZwoju {
-        OSLONY(
-                "zwoj_oslony",
-                "Zwój Osłony I",
-                NamedTextColor.GREEN
-        ),
-        REGENERACJI(
-                "zwoj_regeneracji",
-                "Zwój Regeneracji I",
-                NamedTextColor.LIGHT_PURPLE
-        ),
-        OGNIA(
-                "zwoj_ognia",
-                "Zwój Ognia I",
-                NamedTextColor.GOLD
-        ),
-        SZYBKOSCI(
-                "zwoj_szybkosci",
-                "Zwój Szybkości I",
-                NamedTextColor.AQUA
-        ),
-        CIEMNOSCI(
-                "zwoj_ciemosci",
-                "Zwój Ciemności I",
-                NamedTextColor.DARK_PURPLE
-        ),
-        JASNOSCI(
-                "zwoj_jasnosci",
-                "Zwój Jasności I",
-                NamedTextColor.YELLOW
-        );
+    public enum TypZwoju {
+        OSLONY("zwoj_oslony", "Zwój Osłony I", NamedTextColor.GREEN),
+        REGENERACJI("zwoj_regeneracji", "Zwój Regeneracji I", NamedTextColor.LIGHT_PURPLE),
+        OGNIA("zwoj_ognia", "Zwój Ognia I", NamedTextColor.GOLD),
+        SZYBKOSCI("zwoj_szybkosci", "Zwój Szybkości I", NamedTextColor.AQUA),
+        CIEMNOSCI("zwoj_ciemosci", "Zwój Ciemności I", NamedTextColor.DARK_PURPLE),
+        JASNOSCI("zwoj_jasnosci", "Zwój Jasności I", NamedTextColor.YELLOW);
 
-        private final String klucz;
-        private final String nazwa;
-        private final NamedTextColor kolor;
+        public final String klucz;
+        public final String nazwa;
+        public final NamedTextColor kolor;
 
         TypZwoju(String klucz, String nazwa, NamedTextColor kolor) {
             this.klucz = klucz;
@@ -84,16 +59,42 @@ public class Zwoje implements Listener {
                 .decoration(TextDecoration.ITALIC, false);
     }
 
+    private String plain(Component component) {
+        return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+                .plainText()
+                .serialize(component);
+    }
+
+    private boolean maLinieZwoju(ItemStack item, TypZwoju typ) {
+        if (item == null || !item.hasItemMeta()) {
+            return false;
+        }
+
+        List<Component> lore = item.getItemMeta().lore();
+
+        if (lore == null) {
+            return false;
+        }
+
+        for (Component linia : lore) {
+            if (plain(linia).equals(typ.nazwa)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean maZwój(ItemStack item, TypZwoju typ) {
+        return maLinieZwoju(item, typ);
+    }
+
     private TypZwoju rozpoznajZwój(ItemStack item) {
-        if (item == null || item.getType() == Material.AIR) {
+        if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) {
             return null;
         }
 
         ItemMeta meta = item.getItemMeta();
-
-        if (meta == null) {
-            return null;
-        }
 
         for (TypZwoju typ : TypZwoju.values()) {
             if (meta.getPersistentDataContainer().has(
@@ -107,32 +108,16 @@ public class Zwoje implements Listener {
         return null;
     }
 
-    private boolean maZwój(ItemStack item, TypZwoju typ) {
-        if (item == null || item.getType() == Material.AIR) {
-            return false;
-        }
-
-        ItemMeta meta = item.getItemMeta();
-
-        return meta != null
-                && meta.getPersistentDataContainer().has(
-                        key(typ.klucz),
-                        PersistentDataType.BYTE
-                );
-    }
-
     private boolean jestKlataMeduzy(ItemStack item) {
-        if (item == null || item.getType() != Material.NETHERITE_CHESTPLATE) {
+        if (item == null || item.getType() != Material.NETHERITE_CHESTPLATE
+                || !item.hasItemMeta()) {
             return false;
         }
 
-        ItemMeta meta = item.getItemMeta();
-
-        return meta != null
-                && meta.getPersistentDataContainer().has(
-                        key("klata_meduzy"),
-                        PersistentDataType.BYTE
-                );
+        return item.getItemMeta().getPersistentDataContainer().has(
+                key("klata_meduzy"),
+                PersistentDataType.BYTE
+        );
     }
 
     private boolean pasuje(ItemStack item, TypZwoju typ) {
@@ -186,21 +171,16 @@ public class Zwoje implements Listener {
         };
     }
 
-    private boolean maJuzZwój(ItemStack item, TypZwoju typ) {
-        if (item == null || !item.hasItemMeta()) {
-            return false;
+    private boolean czyLiniaJestUlepszeniem(Component component) {
+        String tekst = plain(component);
+
+        for (TypZwoju typ : TypZwoju.values()) {
+            if (tekst.equals(typ.nazwa)) {
+                return true;
+            }
         }
 
-        ItemMeta meta = item.getItemMeta();
-        List<Component> lore = meta.lore();
-
-        if (lore == null) {
-            return false;
-        }
-
-        Component nazwaZwoju = tekst(typ.nazwa, typ.kolor);
-
-        return lore.contains(nazwaZwoju);
+        return false;
     }
 
     private ItemStack przygotujWynik(ItemStack item, TypZwoju typ) {
@@ -219,31 +199,34 @@ public class Zwoje implements Listener {
             lore = new ArrayList<>(lore);
         }
 
-        Component liniaZwoju = tekst(typ.nazwa, typ.kolor);
-
-        if (lore.contains(liniaZwoju)) {
+        if (maLinieZwoju(item, typ)) {
             return null;
         }
 
-        // Jedna pusta linia oddzielająca stare lore od ulepszeń.
-        if (!lore.isEmpty() && !lore.get(lore.size() - 1).equals(Component.empty())) {
+        // Zachowujemy stare lore i oddzielamy sekcję ulepszeń pustą linią.
+        boolean maJuzInnyZwój = false;
+
+        for (Component linia : lore) {
+            if (czyLiniaJestUlepszeniem(linia)) {
+                maJuzInnyZwój = true;
+                break;
+            }
+        }
+
+        if (!maJuzInnyZwój && !lore.isEmpty()
+                && !plain(lore.get(lore.size() - 1)).isEmpty()) {
             lore.add(Component.empty());
         }
 
-        // Kolejne zwoje trafiają bez dodatkowej pustej linii.
-        lore.add(liniaZwoju);
-
+        // Kolejne ulepszenia są dopisywane bez dodatkowych pustych linii.
+        lore.add(tekst(typ.nazwa, typ.kolor));
         meta.lore(lore);
 
-        // Trim Gold Flow dla zbroi.
-        // Klata Meduzy zachowuje swój oryginalny Diamond Flow.
+        // Trim jest tylko wizualny. Nie służy do wykrywania działania zwoju.
         if (meta instanceof ArmorMeta armorMeta) {
             if (!jestKlataMeduzy(item)) {
                 armorMeta.setTrim(
-                        new ArmorTrim(
-                                TrimMaterial.GOLD,
-                                TrimPattern.FLOW
-                        )
+                        new ArmorTrim(TrimMaterial.GOLD, TrimPattern.FLOW)
                 );
             }
         }
@@ -265,51 +248,18 @@ public class Zwoje implements Listener {
             return;
         }
 
-        if (item == null || item.getType() == Material.AIR) {
-            event.setResult(null);
-            return;
-        }
-
-        if (!pasuje(item, typ)) {
-            event.setResult(null);
-            return;
-        }
-
-        if (maJuzZwój(item, typ)) {
+        if (item == null || item.getType() == Material.AIR
+                || !pasuje(item, typ)
+                || maLinieZwoju(item, typ)) {
             event.setResult(null);
             return;
         }
 
         ItemStack wynik = przygotujWynik(item, typ);
-
-        if (wynik == null) {
-            event.setResult(null);
-            return;
-        }
-
         event.setResult(wynik);
 
-        // Niewielki koszt poziomów.
-        inventory.setRepairCost(1);
-    }
-
-    @EventHandler
-    public void onAnvilClick(InventoryClickEvent event) {
-        if (event.getView().getTopInventory().getType() != InventoryType.ANVIL) {
-            return;
+        if (wynik != null) {
+            inventory.setRepairCost(1);
         }
-
-        if (event.getRawSlot() != 2) {
-            return;
-        }
-
-        ItemStack wynik = event.getCurrentItem();
-
-        if (wynik == null || wynik.getType() == Material.AIR) {
-            return;
-        }
-
-        // Odbiór wyniku jest obsługiwany przez vanilla kowadło.
-        // Nie blokujemy kliknięcia, żeby gracz mógł normalnie odebrać item.
     }
 }
