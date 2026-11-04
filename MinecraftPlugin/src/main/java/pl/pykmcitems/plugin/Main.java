@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import org.bukkit.Material;
@@ -11,7 +12,6 @@ public class Main extends JavaPlugin {
 
     private ZlamaneSerce zlamaneSerce;
     private KlataMeduzy klataMeduzy;
-    private Zwoje zwoje;
 
     @Override
     public void onEnable() {
@@ -30,9 +30,6 @@ public class Main extends JavaPlugin {
 
         klataMeduzy = new KlataMeduzy(this);
         getServer().getPluginManager().registerEvents(klataMeduzy, this);
-
-        zwoje = new Zwoje(this);
-        getServer().getPluginManager().registerEvents(zwoje, this);
 
         getLogger().info("PykMCItems zostal wlaczony!");
     }
@@ -56,7 +53,11 @@ public class Main extends JavaPlugin {
             Command command,
             String label,
             String[] args
-    ) 
+    ) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Ta komenda jest dostepna tylko dla graczy!");
+            return true;
+        }
 
         if (command.getName().equalsIgnoreCase("ustawglowke")) {
             if (!player.hasPermission("pykmcitems.ustawglowke")) {
@@ -67,7 +68,7 @@ public class Main extends JavaPlugin {
             ItemStack heldItem = player.getInventory().getItemInMainHand();
 
             if (heldItem.getType() != Material.PLAYER_HEAD) {
-                player.sendMessage("§cMusisz trzymac glowke gracza w glównej rece!");
+                player.sendMessage("§cMusisz trzymac glowke gracza w glownej rece!");
                 return true;
             }
 
