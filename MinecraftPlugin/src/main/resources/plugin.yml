@@ -68,11 +68,6 @@ commands:
     description: Nadaje Klata Meduzy
     usage: /meduza
     permission: pykmcitems.meduza
-
-  zwoj:
-    description: Nadaje wybrany zwój
-    usage: /zwoj <oslony|regeneracji|ognia|szybkosci|ciemnosci|jasnosci>
-    permission: pykmcitems.zwoje
     
 permissions:
   pykmcitems.koniczyna:
@@ -127,6 +122,3 @@ permissions:
     description: Pozwala nadawac Klata Meduzy
     default: op
     
-  pykmcitems.zwoje:
-    description: Pozwala nadawac zwoje
-    default: op
