@@ -68,6 +68,12 @@ commands:
     description: Nadaje Klata Meduzy
     usage: /meduza
     permission: pykmcitems.meduza
+
+
+  berlo:
+    description: Daje Berło Drakuli
+    usage: /berlo
+    permission: pykmcitems.berlo
     
 permissions:
   pykmcitems.koniczyna:
@@ -120,5 +126,9 @@ permissions:
 
   pykmcitems.meduza:
     description: Pozwala nadawac Klata Meduzy
+    default: op
+
+  pykmcitems.berlo:
+    description: Pozwala otrzymać Berło Drakuli
     default: op
     
