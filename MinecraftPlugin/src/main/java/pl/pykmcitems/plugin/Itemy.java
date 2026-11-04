@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
@@ -519,7 +520,7 @@ public class Itemy {
             int customModelData,
             String opis
     ) {
-        ItemStack item = new ItemStack(Material.PAPER);
+        ItemStack item = new ItemStack(Material.FIELD_MASONED_BANNER_PATTERN);
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(pogrubiony(nazwa, kolor));
