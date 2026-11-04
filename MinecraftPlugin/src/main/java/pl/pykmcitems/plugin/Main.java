@@ -1,4 +1,3 @@
-
 package pl.pykmcitems.plugin;
 
 import org.bukkit.Material;
@@ -12,6 +11,7 @@ public class Main extends JavaPlugin {
 
     private ZlamaneSerce zlamaneSerce;
     private KlataMeduzy klataMeduzy;
+    private Zwoje zwoje;
 
     @Override
     public void onEnable() {
@@ -26,12 +26,13 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new Lodolap(this), this);
         getServer().getPluginManager().registerEvents(new Buda(this), this);
 
-        // Złamane Serce
         zlamaneSerce = new ZlamaneSerce(this);
 
-        // Klata Meduzy
         klataMeduzy = new KlataMeduzy(this);
         getServer().getPluginManager().registerEvents(klataMeduzy, this);
+
+        zwoje = new Zwoje(this);
+        getServer().getPluginManager().registerEvents(zwoje, this);
 
         getLogger().info("PykMCItems zostal wlaczony!");
     }
@@ -58,6 +59,37 @@ public class Main extends JavaPlugin {
     ) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Tej komendy moze uzyc tylko gracz!");
+            return true;
+        }
+
+        if (command.getName().equalsIgnoreCase("zwoj")) {
+            if (!player.hasPermission("pykmcitems.zwoje")) {
+                player.sendMessage("§cNie masz uprawnien do tej komendy!");
+                return true;
+            }
+
+            if (args.length != 1) {
+                player.sendMessage("§cUzycie: /zwoj <oslony|regeneracji|ognia|szybkosci|ciemnosci|jasnosci>");
+                return true;
+            }
+
+            ItemStack item;
+
+            switch (args[0].toLowerCase()) {
+                case "oslony" -> item = Itemy.zwojOslony(this);
+                case "regeneracji" -> item = Itemy.zwojRegeneracji(this);
+                case "ognia" -> item = Itemy.zwojOgnia(this);
+                case "szybkosci" -> item = Itemy.zwojSzybkosci(this);
+                case "ciemnosci" -> item = Itemy.zwojCiemnosci(this);
+                case "jasnosci" -> item = Itemy.zwojJasnosci(this);
+                default -> {
+                    player.sendMessage("§cNieznany typ zwoju!");
+                    return true;
+                }
+            }
+
+            player.getInventory().addItem(item);
+            player.sendMessage("§aOtrzymales zwój!");
             return true;
         }
 
