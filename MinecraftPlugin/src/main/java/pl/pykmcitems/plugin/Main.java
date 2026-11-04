@@ -56,42 +56,7 @@ public class Main extends JavaPlugin {
             Command command,
             String label,
             String[] args
-    ) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Tej komendy moze uzyc tylko gracz!");
-            return true;
-        }
-
-        if (command.getName().equalsIgnoreCase("zwoj")) {
-            if (!player.hasPermission("pykmcitems.zwoje")) {
-                player.sendMessage("§cNie masz uprawnien do tej komendy!");
-                return true;
-            }
-
-            if (args.length != 1) {
-                player.sendMessage("§cUzycie: /zwoj <oslony|regeneracji|ognia|szybkosci|ciemnosci|jasnosci>");
-                return true;
-            }
-
-            ItemStack item;
-
-            switch (args[0].toLowerCase()) {
-                case "oslony" -> item = Itemy.zwojOslony(this);
-                case "regeneracji" -> item = Itemy.zwojRegeneracji(this);
-                case "ognia" -> item = Itemy.zwojOgnia(this);
-                case "szybkosci" -> item = Itemy.zwojSzybkosci(this);
-                case "ciemnosci" -> item = Itemy.zwojCiemnosci(this);
-                case "jasnosci" -> item = Itemy.zwojJasnosci(this);
-                default -> {
-                    player.sendMessage("§cNieznany typ zwoju!");
-                    return true;
-                }
-            }
-
-            player.getInventory().addItem(item);
-            player.sendMessage("§aOtrzymales zwój!");
-            return true;
-        }
+    ) 
 
         if (command.getName().equalsIgnoreCase("ustawglowke")) {
             if (!player.hasPermission("pykmcitems.ustawglowke")) {
