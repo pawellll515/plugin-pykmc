@@ -12,6 +12,7 @@ public class Main extends JavaPlugin {
 
     private ZlamaneSerce zlamaneSerce;
     private KlataMeduzy klataMeduzy;
+    private BerloDrakuli berloDrakuli;
 
     @Override
     public void onEnable() {
@@ -25,6 +26,8 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new Hydra(this), this);
         getServer().getPluginManager().registerEvents(new Lodolap(this), this);
         getServer().getPluginManager().registerEvents(new Buda(this), this);
+        berloDrakuli = new BerloDrakuli(this);
+        getServer().getPluginManager().registerEvents(berloDrakuli, this);
 
         zlamaneSerce = new ZlamaneSerce(this);
 
@@ -42,6 +45,10 @@ public class Main extends JavaPlugin {
 
         if (klataMeduzy != null) {
             klataMeduzy.cleanup();
+        }
+
+        if (berloDrakuli != null) {
+            berloDrakuli.cleanup();
         }
 
         getLogger().info("PykMCItems zostal wylaczony!");
@@ -166,8 +173,20 @@ public class Main extends JavaPlugin {
                 return true;
             }
 
+
             player.getInventory().addItem(ZlamaneSerce.createItem(this));
             player.sendMessage("§aOtrzymales §c§lZlamane Serce§a!");
+            return true;
+        }
+
+        if (command.getName().equalsIgnoreCase("berlo")) {
+            if (!player.hasPermission("pykmcitems.berlo")) {
+                player.sendMessage("§cNie masz uprawnien do tej komendy!");
+                return true;
+            }
+
+            player.getInventory().addItem(BerloDrakuli.createItem());
+            player.sendMessage("§aOtrzymales §x§E§A§0§0§0§0Berło Drakuli§a!");
             return true;
         }
 
