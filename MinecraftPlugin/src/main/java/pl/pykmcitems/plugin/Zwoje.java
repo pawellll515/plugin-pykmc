@@ -144,8 +144,7 @@ public class Zwoje implements Listener {
 
         return switch (typ) {
             case OSLONY ->
-                    material == Material.HELMET
-                    || material == Material.LEATHER_HELMET
+                    material == Material.LEATHER_HELMET
                     || material == Material.CHAINMAIL_HELMET
                     || material == Material.IRON_HELMET
                     || material == Material.GOLDEN_HELMET
