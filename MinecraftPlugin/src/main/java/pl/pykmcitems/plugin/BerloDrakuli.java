@@ -103,6 +103,7 @@ public class BerloDrakuli implements Listener {
         scale.setBaseValue(0.5);
 
         cooldowns.put(uuid, System.currentTimeMillis() + 120_000);
+        player.setCooldown(Material.STICK, 20 * 120);
 
         player.sendMessage("§x§E§A§0§0§0§0Berło Drakuli §7zmniejszyło Twoją postać!");
 
