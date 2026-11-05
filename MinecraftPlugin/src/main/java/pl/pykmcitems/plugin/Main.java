@@ -13,6 +13,7 @@ public class Main extends JavaPlugin {
     private ZlamaneSerce zlamaneSerce;
     private KlataMeduzy klataMeduzy;
     private BerloDrakuli berloDrakuli;
+    private ObsikanaSniezka obsikanaSniezka;
 
     @Override
     public void onEnable() {
@@ -28,6 +29,8 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new Buda(this), this);
         berloDrakuli = new BerloDrakuli(this);
         getServer().getPluginManager().registerEvents(berloDrakuli, this);
+        obsikanaSniezka = new ObsikanaSniezka(this);
+        getServer().getPluginManager().registerEvents(obsikanaSniezka, this);
 
         zlamaneSerce = new ZlamaneSerce(this);
 
@@ -49,6 +52,10 @@ public class Main extends JavaPlugin {
 
         if (berloDrakuli != null) {
             berloDrakuli.cleanup();
+        }
+
+        if (obsikanaSniezka != null) {
+            obsikanaSniezka.cleanup();
         }
 
         getLogger().info("PykMCItems zostal wylaczony!");
@@ -97,6 +104,18 @@ public class Main extends JavaPlugin {
             player.getInventory().addItem(Itemy.rogNiebios(this));
             player.sendMessage("§bOtrzymales Rog Niebios!");
             return true;
+        }
+
+        if (command.getName().equalsIgnoreCase("obsikanasniezka")) {
+        if (!player.hasPermission("pykmcitems.obsikanasniezka")) {
+            player.sendMessage("§cNie masz uprawnien do tej komendy!");
+            return true;
+        }
+
+        player.getInventory().addItem(Itemy.obsikanaSniezka(this));
+        player.sendMessage("§aOtrzymales §eObsikana Śnieżkę§a!");
+        return true;
+            
         }
 
         if (command.getName().equalsIgnoreCase("glodomiot")) {
