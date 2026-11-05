@@ -41,7 +41,7 @@ public class BerloDrakuli implements Listener {
         meta.setLore(java.util.Arrays.asList(
                 "",
                 "§7Po użyciu zmniejszasz swoją postać",
-                "§7o §e50 procent §7na §e15s",
+                "§7o §e50% §7na §e15s",
                 "",
                 "§7Cooldown: §e2min"
         ));
