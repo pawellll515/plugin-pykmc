@@ -608,4 +608,46 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
+    // OBSIKANA ŚNIEŻKA
+
+    public static ItemStack obsikanaSniezka(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.SNOWBALL);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(
+                Component.text("Obsikana Śnieżka", NamedTextColor.YELLOW)
+                        .decoration(TextDecoration.ITALIC, false)
+        );
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.text()
+                .append(tekst("Po trafieniu w przeciwnika ", NamedTextColor.GRAY))
+                .append(tekst("zamraża ", NamedTextColor.YELLOW))
+                .append(tekst("go na ", NamedTextColor.GRAY))
+                .append(tekst("2.5s", NamedTextColor.YELLOW))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("oraz uniemożliwia mu ", NamedTextColor.GRAY))
+                .append(tekst("jedzenie ", NamedTextColor.RED))
+                .append(tekst("przez czas efektu", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.empty());
+
+        lore.add(tekst("Przedmiot jest jednorazowy", NamedTextColor.GRAY));
+
+        meta.lore(lore);
+        meta.setCustomModelData(2);
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "obsikana_sniezka"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
 }
