@@ -26,6 +26,11 @@ commands:
     usage: /rozpadacz
     permission: pykmcitems.rozpadacz
 
+  obsikanasniezka:
+    description: Nadaje Obsikana Śnieżkę
+    usage: /obsikanasniezka
+    permission: pykmcitems.obsikanasniezka
+
   topor:
     description: Daje Topór Wykluczenia
     usage: /topor
@@ -98,6 +103,10 @@ permissions:
 
   pykmcitems.hydra:
     description: Pozwala nadawac Hydre
+    default: op
+
+  pykmcitems.obsikanasniezka:
+    description: Pozwala nadawać Obsikaną Śnieżkę
     default: op
 
   pykmcitems.rozga:
