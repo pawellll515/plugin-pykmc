@@ -620,6 +620,7 @@ public class Itemy {
 
         List<Component> lore = new ArrayList<>();
 
+        lore.add(Component.empty());
         lore.add(Component.text()
                 .append(tekst("Po trafieniu w przeciwnika ", NamedTextColor.GRAY))
                 .append(tekst("zamraża ", NamedTextColor.YELLOW))
