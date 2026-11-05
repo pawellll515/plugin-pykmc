@@ -1,16 +1,20 @@
+
 package pl.pykmcitems.plugin;
 
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.event.player.PlayerLaunchProjectileEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -26,59 +30,87 @@ public class ObsikanaSniezka implements Listener {
     private final NamespacedKey projectileKey;
 
     private final Map<UUID, BukkitTask> zamrozeni = new HashMap<>();
-
     private final Map<UUID, Location> miejscaTrafienia = new HashMap<>();
+    private final Map<UUID, Long> cooldowny = new HashMap<>();
+
+    private static final long COOLDOWN = 45_000L;
 
     public ObsikanaSniezka(JavaPlugin plugin) {
         this.plugin = plugin;
-
         this.itemKey = new NamespacedKey(plugin, "obsikana_sniezka");
         this.projectileKey = new NamespacedKey(plugin, "obsikana_sniezka_projectile");
     }
 
-    // Oznaczamy śnieżkę, jeśli została wyrzucona z naszego przedmiotu
+    // Rzucanie Obsikanej Śnieżki
     @EventHandler
-    public void onProjectileLaunch(PlayerLaunchProjectileEvent event) {
-        if (!(event.getProjectile() instanceof Snowball snowball)) {
+    public void onInteract(PlayerInteractEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+
+        if (event.getAction() != Action.RIGHT_CLICK_AIR
+                && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
 
-        if (!event.getItemStack().hasItemMeta()) {
-            return;
-        }
+        Player player = event.getPlayer();
+        ItemStack item = event.getItem();
 
-        if (!event.getItemStack().getItemMeta()
-                .getPersistentDataContainer()
+        if (item == null || !item.hasItemMeta()) return;
+
+        if (!item.getItemMeta().getPersistentDataContainer()
                 .has(itemKey, PersistentDataType.BYTE)) {
             return;
         }
+
+        // Sprawdzanie cooldownu
+        long teraz = System.currentTimeMillis();
+        long koniec = cooldowny.getOrDefault(player.getUniqueId(), 0L);
+
+        if (teraz < koniec) {
+            long pozostalo = (koniec - teraz + 999) / 1000;
+
+            player.sendMessage(
+                    "§cMusisz poczekać jeszcze §e" + pozostalo + "s§c!"
+            );
+
+            event.setCancelled(true);
+            return;
+        }
+
+        event.setCancelled(true);
+
+        // Rzucenie śnieżki
+        Snowball snowball = player.launchProjectile(Snowball.class);
 
         snowball.getPersistentDataContainer().set(
                 projectileKey,
                 PersistentDataType.BYTE,
                 (byte) 1
         );
+
+        // Ustawienie cooldownu 45 sekund
+        cooldowny.put(player.getUniqueId(), teraz + COOLDOWN);
+
+        // Zużycie jednej śnieżki
+        if (item.getAmount() <= 1) {
+            player.getInventory().setItemInMainHand(null);
+        } else {
+            item.setAmount(item.getAmount() - 1);
+        }
     }
 
-    // Obsługa trafienia przeciwnika
+    // Trafienie przeciwnika
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
-        Projectile projectile = event.getEntity();
+        if (!(event.getEntity() instanceof Snowball snowball)) return;
 
-        if (!(projectile instanceof Snowball)) {
-            return;
-        }
-
-        if (!projectile.getPersistentDataContainer()
+        if (!snowball.getPersistentDataContainer()
                 .has(projectileKey, PersistentDataType.BYTE)) {
             return;
         }
 
-        if (!(event.getHitEntity() instanceof Player target)) {
-            return;
-        }
+        if (!(event.getHitEntity() instanceof Player target)) return;
 
-        if (projectile.getShooter() instanceof Player shooter
+        if (snowball.getShooter() instanceof Player shooter
                 && shooter.getUniqueId().equals(target.getUniqueId())) {
             return;
         }
@@ -86,18 +118,17 @@ public class ObsikanaSniezka implements Listener {
         zamroz(target);
     }
 
+    // Zamrażanie gracza
     private void zamroz(Player target) {
         UUID uuid = target.getUniqueId();
 
-        // Jeśli gracz jest już zamrożony, odnawiamy czas efektu
-        BukkitTask poprzednie = zamrozeni.remove(uuid);
+        BukkitTask previous = zamrozeni.remove(uuid);
 
-        if (poprzednie != null) {
-            poprzednie.cancel();
+        if (previous != null) {
+            previous.cancel();
         }
 
         Location miejsce = target.getLocation().clone();
-
         miejscaTrafienia.put(uuid, miejsce);
 
         target.sendMessage("§bZostałeś zamrożony na §e2.5 sekundy§b!");
@@ -110,7 +141,7 @@ public class ObsikanaSniezka implements Listener {
                     @Override
                     public void run() {
                         if (!target.isOnline() || target.isDead()) {
-                            zakoncz(target);
+                            zakoncz(target, false);
                             return;
                         }
 
@@ -120,7 +151,7 @@ public class ObsikanaSniezka implements Listener {
                             target.teleport(freezeLocation);
                         }
 
-                        // Przerywamy używanie przedmiotu, jeśli gracz próbuje jeść
+                        // Przerywanie jedzenia
                         if (target.isHandRaised()) {
                             target.clearActiveItem();
                         }
@@ -128,7 +159,7 @@ public class ObsikanaSniezka implements Listener {
                         tick++;
 
                         if (tick >= 50) {
-                            zakoncz(target);
+                            zakoncz(target, true);
                         }
                     }
                 },
@@ -139,7 +170,17 @@ public class ObsikanaSniezka implements Listener {
         zamrozeni.put(uuid, task);
     }
 
-    private void zakoncz(Player target) {
+    // Blokowanie jedzenia
+    @EventHandler
+    public void onConsume(PlayerItemConsumeEvent event) {
+        if (zamrozeni.containsKey(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+            event.getPlayer().clearActiveItem();
+        }
+    }
+
+    // Zakończenie zamrożenia
+    private void zakoncz(Player target, boolean notify) {
         UUID uuid = target.getUniqueId();
 
         BukkitTask task = zamrozeni.remove(uuid);
@@ -150,21 +191,24 @@ public class ObsikanaSniezka implements Listener {
 
         miejscaTrafienia.remove(uuid);
 
-        if (target.isOnline()) {
+        if (notify && target.isOnline()) {
             target.sendMessage("§aEfekt zamrożenia zakończył się!");
         }
     }
 
-    // Dodatkowe zabezpieczenie: nie pozwalamy zakończyć jedzenia
+    // Wyjście z serwera
     @EventHandler
-    public void onConsume(PlayerItemConsumeEvent event) {
-        if (zamrozeni.containsKey(event.getPlayer().getUniqueId())) {
-            event.setCancelled(true);
-            event.getPlayer().clearActiveItem();
-        }
+    public void onQuit(PlayerQuitEvent event) {
+        zakoncz(event.getPlayer(), false);
     }
 
-    // Czyszczenie zadań przy wyłączaniu pluginu
+    // Śmierć
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        zakoncz(event.getEntity(), false);
+    }
+
+    // Czyszczenie przy wyłączeniu pluginu
     public void cleanup() {
         for (BukkitTask task : zamrozeni.values()) {
             task.cancel();
@@ -172,5 +216,6 @@ public class ObsikanaSniezka implements Listener {
 
         zamrozeni.clear();
         miejscaTrafienia.clear();
+        cooldowny.clear();
     }
 }
