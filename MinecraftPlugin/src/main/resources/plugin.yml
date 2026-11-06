@@ -30,6 +30,10 @@ commands:
     usage: /rozpadacz
     permission: pykmcitems.rozpadacz
 
+  sb:
+    description: Wlacza lub wylacza scoreboard
+    usage: /sb
+
   obsikanasniezka:
     description: Nadaje Obsikana Śnieżkę
     usage: /obsikanasniezka
