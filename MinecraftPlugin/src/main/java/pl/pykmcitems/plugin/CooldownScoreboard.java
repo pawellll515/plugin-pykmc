@@ -109,7 +109,7 @@ public final class CooldownScoreboard implements Listener {
                 LEGACY.deserialize(
                         ChatColor.translateAlternateColorCodes(
                                 '&',
-                                "&e&lPyk&dMC &r&bPractice"
+                                "&e&lPyk&d&lMC &r&bPractice"
                         )
                 )
         );
@@ -194,10 +194,13 @@ public final class CooldownScoreboard implements Listener {
 
         List<String> lines = new ArrayList<>();
 
-        lines.add("&7Serwer practice zrobiony przez pawelek");
-        lines.add("&7żeby wyłączyć &escoreboard &7wpisz &e/sb");
+        lines.add("&7Komendy:");
+        lines.add("&7/losuj-eve");
+        lines.add("&7/losuj-zwoje");
+        lines.add("&7/kit");
         lines.add(" ");
-        lines.add("&6&lcooldowny");
+        lines.add("&7Wył. &escoreboard &e/sb");
+        lines.add(" ");
 
         List<CooldownEntry> active =
                 new ArrayList<>(playerCooldowns.values());
