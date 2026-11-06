@@ -262,11 +262,14 @@ public final class CooldownScoreboard implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        if (!disabled.contains(player.getUniqueId())) {
-            createBoard(player);
-        }
-    }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!player.isOnline()) return;
+            if (disabled.contains(player.getUniqueId())) return;
 
+            createBoard(player);
+        }, 2L);
+    }
+    
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
