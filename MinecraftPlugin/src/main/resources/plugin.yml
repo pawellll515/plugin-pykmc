@@ -1,3 +1,4 @@
+
 name: PykMCItems
 version: 1.0.0
 main: pl.pykmcitems.plugin.Main
@@ -30,14 +31,15 @@ commands:
     usage: /rozpadacz
     permission: pykmcitems.rozpadacz
 
-  sb:
-    description: Wlacza lub wylacza scoreboard
-    usage: /sb
-
   obsikanasniezka:
     description: Nadaje Obsikana Śnieżkę
     usage: /obsikanasniezka
     permission: pykmcitems.obsikanasniezka
+
+  lukwiedzmy:
+    description: Nadaje Łuk Wiedźmy
+    usage: /lukwiedzmy
+    permission: pykmcitems.lukwiedzmy
 
   topor:
     description: Daje Topór Wykluczenia
@@ -71,10 +73,12 @@ commands:
 
   buda:
     description: Daje przedmiot Buda
+    usage: /buda
     permission: pykmcitems.buda
 
   zlamane:
     description: Daje Zlamane Serce
+    usage: /zlamane
     permission: pykmcitems.zlamane
 
   meduza:
@@ -82,12 +86,11 @@ commands:
     usage: /meduza
     permission: pykmcitems.meduza
 
-
   berlo:
     description: Daje Berło Drakuli
     usage: /berlo
     permission: pykmcitems.berlo
-    
+
 permissions:
   pykmcitems.koniczyna:
     description: Pozwala nadawac Koniczynke
@@ -115,6 +118,10 @@ permissions:
 
   pykmcitems.obsikanasniezka:
     description: Pozwala nadawać Obsikaną Śnieżkę
+    default: op
+
+  pykmcitems.lukwiedzmy:
+    description: Pozwala nadawać Łuk Wiedźmy
     default: op
 
   pykmcitems.rozga:
@@ -148,4 +155,3 @@ permissions:
   pykmcitems.berlo:
     description: Pozwala otrzymać Berło Drakuli
     default: op
-    
