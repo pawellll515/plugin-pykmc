@@ -62,9 +62,9 @@ public class ZlamaneSerce implements Listener {
         ItemStack item = new ItemStack(Material.AMETHYST_SHARD);
         ItemMeta meta = item.getItemMeta();
 
-        meta.setDisplayName(ChatColor.translateAlternateColorCodes(
-                '&', "&c&lZłamane Serce"
-        ));
+        meta.displayName(Component.text("Złamane Serce")
+                .color(net.kyori.adventure.text.format.TextColor.fromHexString("#E547D0"))
+                .decoration(TextDecoration.ITALIC, false));
 
         meta.setLore(Arrays.asList(
                 ChatColor.translateAlternateColorCodes(
