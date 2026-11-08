@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import org.bukkit.Material;
@@ -13,11 +14,13 @@ public class Main extends JavaPlugin {
     private KlataMeduzy klataMeduzy;
     private BerloDrakuli berloDrakuli;
     private ObsikanaSniezka obsikanaSniezka;
+    private LukWiedzmy lukWiedzmy;
     private CooldownScoreboard cooldownScoreboard;
 
     @Override
     public void onEnable() {
         cooldownScoreboard = new CooldownScoreboard(this);
+
         getServer().getPluginManager().registerEvents(new Koniczynka(this), this);
         getServer().getPluginManager().registerEvents(new Rog(this), this);
         getServer().getPluginManager().registerEvents(new Glodomiot(this), this);
@@ -28,10 +31,15 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new Hydra(this), this);
         getServer().getPluginManager().registerEvents(new Lodolap(this), this);
         getServer().getPluginManager().registerEvents(new Buda(this), this);
+
         berloDrakuli = new BerloDrakuli(this);
         getServer().getPluginManager().registerEvents(berloDrakuli, this);
+
         obsikanaSniezka = new ObsikanaSniezka(this);
         getServer().getPluginManager().registerEvents(obsikanaSniezka, this);
+
+        lukWiedzmy = new LukWiedzmy(this);
+        getServer().getPluginManager().registerEvents(lukWiedzmy, this);
 
         zlamaneSerce = new ZlamaneSerce(this);
 
@@ -57,6 +65,10 @@ public class Main extends JavaPlugin {
 
         if (obsikanaSniezka != null) {
             obsikanaSniezka.cleanup();
+        }
+
+        if (lukWiedzmy != null) {
+            lukWiedzmy.cleanup();
         }
 
         if (cooldownScoreboard != null) {
@@ -121,15 +133,25 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("obsikanasniezka")) {
-        if (!player.hasPermission("pykmcitems.obsikanasniezka")) {
-            player.sendMessage("§cNie masz uprawnien do tej komendy!");
+            if (!player.hasPermission("pykmcitems.obsikanasniezka")) {
+                player.sendMessage("§cNie masz uprawnien do tej komendy!");
+                return true;
+            }
+
+            player.getInventory().addItem(Itemy.obsikanaSniezka(this));
+            player.sendMessage("§aOtrzymales §eObsikana Śnieżkę§a!");
             return true;
         }
 
-        player.getInventory().addItem(Itemy.obsikanaSniezka(this));
-        player.sendMessage("§aOtrzymales §eObsikana Śnieżkę§a!");
-        return true;
-            
+        if (command.getName().equalsIgnoreCase("lukwiedzmy")) {
+            if (!player.hasPermission("pykmcitems.lukwiedzmy")) {
+                player.sendMessage("§cNie masz uprawnien do tej komendy!");
+                return true;
+            }
+
+            player.getInventory().addItem(Itemy.lukWiedzmy(this));
+            player.sendMessage("§aOtrzymales §dŁuk Wiedźmy§a!");
+            return true;
         }
 
         if (command.getName().equalsIgnoreCase("glodomiot")) {
@@ -205,7 +227,6 @@ public class Main extends JavaPlugin {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
             }
-
 
             player.getInventory().addItem(ZlamaneSerce.createItem(this));
             player.sendMessage("§aOtrzymales §c§lZlamane Serce§a!");
