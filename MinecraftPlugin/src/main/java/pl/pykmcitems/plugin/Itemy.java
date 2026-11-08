@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
@@ -34,13 +35,12 @@ public class Itemy {
     }
 
     // KONICZYNKA
-
     public static ItemStack koniczynka(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.PAPER);
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(Component.text("Koniczynka")
-                .color(net.kyori.adventure.text.format.NamedTextColor.GREEN)
+                .color(NamedTextColor.GREEN)
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
@@ -84,7 +84,6 @@ public class Itemy {
     }
 
     // RÓG NIEBIOS
-
     public static ItemStack rogNiebios(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.GOAT_HORN);
         ItemMeta meta = item.getItemMeta();
@@ -121,7 +120,6 @@ public class Itemy {
     }
 
     // GŁODOMIOT
-
     public static ItemStack glodomiot(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.IRON_HOE);
         ItemMeta meta = item.getItemMeta();
@@ -158,7 +156,6 @@ public class Itemy {
     }
 
     // ROZPADACZ
-
     public static ItemStack rozpadacz(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.HEART_OF_THE_SEA);
         ItemMeta meta = item.getItemMeta();
@@ -192,7 +189,6 @@ public class Itemy {
     }
 
     // RÓZGA
-
     public static ItemStack rozga(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.STICK);
         ItemMeta meta = item.getItemMeta();
@@ -226,7 +222,6 @@ public class Itemy {
     }
 
     // ŚWIĄTECZNA KATANA
-
     public static ItemStack swiatecznaKatana(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.NETHERITE_SWORD);
         ItemMeta meta = item.getItemMeta();
@@ -279,7 +274,6 @@ public class Itemy {
     }
 
     // TOPÓR WYKLUCZENIA
-
     public static ItemStack toporWykluczenia(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.IRON_AXE);
         ItemMeta meta = item.getItemMeta();
@@ -322,7 +316,6 @@ public class Itemy {
     }
 
     // LODOŁAP
-
     public static ItemStack lodolap(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.SNOWBALL);
         ItemMeta meta = item.getItemMeta();
@@ -369,7 +362,6 @@ public class Itemy {
     }
 
     // HYDRA
-
     public static ItemStack hydra(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.NETHERITE_SWORD);
         ItemMeta meta = item.getItemMeta();
@@ -445,7 +437,6 @@ public class Itemy {
     }
 
     // BUDA
-
     public static ItemStack buda(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.CHAIN);
         ItemMeta meta = item.getItemMeta();
@@ -481,7 +472,6 @@ public class Itemy {
     }
 
     // ZŁAMANE SERCE
-
     public static ItemStack zlamaneSerce(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.AMETHYST_SHARD);
         ItemMeta meta = item.getItemMeta();
@@ -529,7 +519,6 @@ public class Itemy {
     }
 
     // KLATA MEDUZY
-
     public static ItemStack klataMeduzy(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.NETHERITE_CHESTPLATE);
         ItemMeta meta = item.getItemMeta();
@@ -582,7 +571,6 @@ public class Itemy {
     }
 
     // BERŁO DRAKULI
-
     public static ItemStack berloDrakuli(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.STICK);
         ItemMeta meta = item.getItemMeta();
@@ -626,8 +614,8 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
-    // OBSIKANA ŚNIEŻKA
 
+    // OBSIKANA ŚNIEŻKA
     public static ItemStack obsikanaSniezka(JavaPlugin plugin) {
         ItemStack item = new ItemStack(Material.SNOWBALL);
         ItemMeta meta = item.getItemMeta();
@@ -662,6 +650,60 @@ public class Itemy {
 
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "obsikana_sniezka"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    // ŁUK WIEDŹMY
+    public static ItemStack lukWiedzmy(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.BOW);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(
+                Component.text("Łuk Wiedźmy", NamedTextColor.LIGHT_PURPLE)
+                        .decoration(TextDecoration.ITALIC, false)
+        );
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(tekst(
+                "Po trafieniu przeciwnika:",
+                NamedTextColor.GRAY
+        ));
+
+        lore.add(Component.text()
+                .append(tekst("» ", NamedTextColor.GRAY))
+                .append(tekst("Oślepienie ", NamedTextColor.DARK_PURPLE))
+                .append(tekst("na 2 sekundy", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("» ", NamedTextColor.GRAY))
+                .append(tekst("Zamrożenie ", NamedTextColor.AQUA))
+                .append(tekst("na 2.5 sekundy", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.empty());
+
+        lore.add(tekst(
+                "Cooldown: 60 sekund",
+                NamedTextColor.YELLOW
+        ));
+
+        lore.add(tekst(
+                "Przedmiot pochodzi z eventu Halloween 2024",
+                NamedTextColor.GRAY
+        ));
+
+        meta.lore(lore);
+        meta.setCustomModelData(2);
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "luk_wiedzmy"),
                 PersistentDataType.BYTE,
                 (byte) 1
         );
