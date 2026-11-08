@@ -48,7 +48,7 @@ public class Itemy {
         lore.add(tekst("Po kliknieciu prawym, otrzymasz", NamedTextColor.GRAY));
         lore.add(Component.text()
                 .append(tekst("efekty ", NamedTextColor.GRAY))
-                .append(tekst("koksa", NamedTextColor.GOLD))
+                .append(tekst("koksa ", NamedTextColor.GOLD))
                 .append(tekst("oraz efekty: ", NamedTextColor.GRAY))
                 .build());
         lore.add(Component.text()
