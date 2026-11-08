@@ -52,12 +52,14 @@ public class Itemy {
                 .append(tekst("oraz efekty: ", NamedTextColor.GRAY))
                 .build());
         lore.add(Component.text()
-                .append(tekst("» Siła 2 ", NamedTextColor.RED))
+                .append(tekst("» ", NamedTextColor.GRAY))
+                .append(tekst("Siła 2 ", NamedTextColor.RED))
                 .append(tekst("na ", NamedTextColor.GRAY))
                 .append(tekst("20s ", NamedTextColor.RED))
                 .build());
         lore.add(Component.text()
-                .append(tekst("» Haste 1 ", NamedTextColor.GOLD))
+                .append(tekst("» ", NamedTextColor.GRAY))
+                .append(tekst("Haste 1 ", NamedTextColor.GOLD))
                 .append(tekst("na ", NamedTextColor.GRAY))
                 .append(tekst("10s ", NamedTextColor.GOLD))
                 .build());
