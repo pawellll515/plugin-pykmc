@@ -39,23 +39,34 @@ public class Itemy {
         ItemStack item = new ItemStack(Material.PAPER);
         ItemMeta meta = item.getItemMeta();
 
-        meta.displayName(pogrubiony("Koniczynka", NamedTextColor.GREEN));
+        meta.displayName(Component.text("Koniczynka")
+                .color(net.kyori.adventure.text.format.NamedTextColor.GREEN)
+                .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
 
+        lore.add(tekst("Po kliknieciu prawym, otrzymasz", NamedTextColor.GRAY));
         lore.add(Component.text()
-                .append(tekst("Ta koniczynka po ", NamedTextColor.GRAY))
-                .append(tekst("PPM", NamedTextColor.GREEN))
-                .append(tekst(" nadaje:", NamedTextColor.GRAY))
+                .append(tekst("efekty ", NamedTextColor.GRAY))
+                .append(tekst("koksa", NamedTextColor.GOLD))
+                .append(tekst("oraz efekty: ", NamedTextColor.GRAY))
                 .build());
-
+        lore.add(Component.text()
+                .append(tekst("» Siła 2 ", NamedTextColor.RED))
+                .append(tekst("na", NamedTextColor.GRAY))
+                .append(tekst("20s ", NamedTextColor.RED))
+                .build());
+        lore.add(Component.text()
+                .append(tekst("» Haste 1 ", NamedTextColor.ORANGE))
+                .append(tekst("na", NamedTextColor.GRAY))
+                .append(tekst("10s ", NamedTextColor.ORANGE))
+                .build());
         lore.add(Component.empty());
-        lore.add(tekst("Efekty zaklętego złotego jabłka", NamedTextColor.GOLD));
-        lore.add(tekst("Strength II na 5 sekund", NamedTextColor.RED));
-        lore.add(tekst("Haste II na 5 sekund", NamedTextColor.YELLOW));
-        lore.add(Component.empty());
-        lore.add(tekst("Przedmiot jest jednorazowy", NamedTextColor.RED));
-        lore.add(tekst("Cooldown: 30 sekund", NamedTextColor.GRAY));
+        lore.add(tekst("Przedmiot jest jednorazowy", NamedTextColor.GRAY));
+        lore.add(Component.text()
+                .append(tekst("Przedmiot pochodzi z eventu ", NamedTextColor.GRAY))
+                .append(tekst("Świętego Patryka", NamedTextColor.GREEN))
+                .build());
 
         meta.lore(lore);
         meta.setCustomModelData(2);
