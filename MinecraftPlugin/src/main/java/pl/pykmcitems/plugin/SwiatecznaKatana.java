@@ -79,7 +79,7 @@ public class SwiatecznaKatana implements Listener {
                 player.getEyeLocation(),
                 player.getEyeLocation().getDirection(),
                 10.0,
-                0.5,
+                1.5,
                 entity -> entity instanceof Player && entity != player
         );
 
