@@ -86,7 +86,7 @@ public class Koniczynka implements Listener {
 
         player.addPotionEffect(new PotionEffect(
                 PotionEffectType.STRENGTH,
-                100,
+                400,
                 1,
                 true,
                 true,
@@ -95,7 +95,7 @@ public class Koniczynka implements Listener {
 
         player.addPotionEffect(new PotionEffect(
                 PotionEffectType.HASTE,
-                100,
+                200,
                 1,
                 true,
                 true,
