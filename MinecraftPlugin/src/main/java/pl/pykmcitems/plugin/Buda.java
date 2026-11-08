@@ -103,8 +103,7 @@ public class Buda implements Listener {
 
         double baseY = Math.floor(center.getY());
 
-        // Podłoga 10 bloków pod stopami, dach 10 bloków nad stopami.
-        double floorY = baseY - 10.0;
+        // Dach 10 bloków nad stopami gracza.
         double roofY = baseY + 10.0;
 
         WorldBorder attackerOldBorder = attacker.getWorldBorder();
@@ -125,7 +124,6 @@ public class Buda implements Listener {
                 targetOldBorder,
                 attackerBorder,
                 targetBorder,
-                floorY,
                 roofY
         );
 
@@ -136,7 +134,8 @@ public class Buda implements Listener {
         target.setWorldBorder(targetBorder);
 
         cooldowns.put(attacker.getUniqueId(), System.currentTimeMillis());
-        ((Main) plugin).getCooldownScoreboard().startCooldown(attacker, "buda", "&e&lBuda", 90_000L);
+        ((Main) plugin).getCooldownScoreboard()
+                .startCooldown(attacker, "buda", "&e&lBuda", COOLDOWN);
 
         if (attacker.isGliding()) {
             attacker.setGliding(false);
@@ -193,28 +192,20 @@ public class Buda implements Listener {
     }
 
     private void applyVerticalLimits(Cage cage) {
-        pushAtLimit(cage.attacker, cage.floorY, cage.roofY);
-        pushAtLimit(cage.target, cage.floorY, cage.roofY);
+        pushAtLimit(cage.attacker, cage.roofY);
+        pushAtLimit(cage.target, cage.roofY);
     }
 
-    private void pushAtLimit(Player player, double floorY, double roofY) {
+    private void pushAtLimit(Player player, double roofY) {
         if (!player.isOnline() || player.isDead()) {
             return;
         }
 
-        double y = player.getLocation().getY();
-        double topY = y + player.getHeight();
-
-        Vector velocity = player.getVelocity();
-
-        // Niewidzialna podłoga 10 bloków pod graczem.
-        if (y <= floorY + 0.15) {
-            velocity.setY(0.45);
-            player.setVelocity(velocity);
-        }
+        double topY = player.getLocation().getY() + player.getHeight();
 
         // Niewidzialny dach 10 bloków nad graczem.
-        else if (topY >= roofY - 0.15) {
+        if (topY >= roofY - 0.15) {
+            Vector velocity = player.getVelocity();
             velocity.setY(-0.45);
             player.setVelocity(velocity);
         }
@@ -323,11 +314,16 @@ public class Buda implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        Cage cage = cages.get(event.getPlayer().getUniqueId());
+        Player player = event.getPlayer();
+
+        Cage cage = cages.get(player.getUniqueId());
 
         if (cage != null) {
             endFight(cage, "§cWalka zakończona przez wyjście gracza!");
         }
+
+        // Reset cooldownu Budy po wyjściu z serwera.
+        cooldowns.remove(player.getUniqueId());
     }
 
     private static class Cage {
@@ -337,7 +333,6 @@ public class Buda implements Listener {
         private final WorldBorder targetOldBorder;
         private final WorldBorder attackerBorder;
         private final WorldBorder targetBorder;
-        private final double floorY;
         private final double roofY;
         private final List<VisibilityPair> hiddenPairs = new ArrayList<>();
         private boolean ended = false;
@@ -349,7 +344,6 @@ public class Buda implements Listener {
                 WorldBorder targetOldBorder,
                 WorldBorder attackerBorder,
                 WorldBorder targetBorder,
-                double floorY,
                 double roofY
         ) {
             this.attacker = attacker;
@@ -358,7 +352,6 @@ public class Buda implements Listener {
             this.targetOldBorder = targetOldBorder;
             this.attackerBorder = attackerBorder;
             this.targetBorder = targetBorder;
-            this.floorY = floorY;
             this.roofY = roofY;
         }
     }
