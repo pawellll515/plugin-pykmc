@@ -57,9 +57,9 @@ public class Itemy {
                 .append(tekst("20s ", NamedTextColor.RED))
                 .build());
         lore.add(Component.text()
-                .append(tekst("» Haste 1 ", NamedTextColor.ORANGE))
+                .append(tekst("» Haste 1 ", NamedTextColor.GOLD))
                 .append(tekst("na", NamedTextColor.GRAY))
-                .append(tekst("10s ", NamedTextColor.ORANGE))
+                .append(tekst("10s ", NamedTextColor.GOLD))
                 .build());
         lore.add(Component.empty());
         lore.add(tekst("Przedmiot jest jednorazowy", NamedTextColor.GRAY));
