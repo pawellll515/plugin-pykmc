@@ -195,7 +195,9 @@ public class Itemy {
         ItemStack item = new ItemStack(Material.STICK);
         ItemMeta meta = item.getItemMeta();
 
-        meta.displayName(pogrubiony("Rózga", NamedTextColor.GRAY));
+        meta.displayName(Component.text("Rózga")
+                .color(net.kyori.adventure.text.format.TextColor.fromHexString("#E6E0C2"))
+                .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
 
@@ -370,7 +372,9 @@ public class Itemy {
         ItemStack item = new ItemStack(Material.NETHERITE_SWORD);
         ItemMeta meta = item.getItemMeta();
 
-        meta.displayName(pogrubiony("Hydra", NamedTextColor.DARK_BLUE));
+        meta.displayName(Component.text("Hydra")
+                .color(net.kyori.adventure.text.format.TextColor.fromHexString("#3700FF"))
+                .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
 
@@ -480,7 +484,9 @@ public class Itemy {
         ItemStack item = new ItemStack(Material.AMETHYST_SHARD);
         ItemMeta meta = item.getItemMeta();
 
-        meta.displayName(pogrubiony("Złamane Serce", NamedTextColor.RED));
+        meta.displayName(Component.text("Złamane Serce")
+                .color(net.kyori.adventure.text.format.TextColor.fromHexString("#E547D0"))
+                .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
 
