@@ -109,6 +109,16 @@ public class Main extends JavaPlugin {
         // Aktualizacja ikon talizmanów nad głowami graczy
         talizmanyManager.updateAllIcons();
 
+        // MOST DO SKRIPT
+        TalizmanSkriptBridge talizmanSkriptBridge =
+                new TalizmanSkriptBridge(this);
+
+        getCommand("pykmc-internal-clear")
+                .setExecutor(talizmanSkriptBridge);
+
+        getCommand("pykmc-internal-give-talisman")
+                .setExecutor(talizmanSkriptBridge);
+
         getLogger().info("PykMCItems zostal wlaczony!");
     }
 
