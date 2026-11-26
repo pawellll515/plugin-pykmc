@@ -1,6 +1,7 @@
 
 package pl.pykmcitems.plugin;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,7 +23,6 @@ public class ItemCooldownManager implements Listener {
     private final File file;
     private final YamlConfiguration config;
 
-    // UUID gracza -> ID przedmiotu -> koniec cooldownu
     private final Map<UUID, Map<String, Long>> cooldowns = new HashMap<>();
 
     public ItemCooldownManager(JavaPlugin plugin, CooldownScoreboard scoreboard) {
@@ -41,9 +41,15 @@ public class ItemCooldownManager implements Listener {
         for (String uuidString : config.getKeys(false)) {
             try {
                 UUID uuid = UUID.fromString(uuidString);
+                ConfigurationSection section = config.getConfigurationSection(uuidString);
+
+                if (section == null) {
+                    continue;
+                }
+
                 Map<String, Long> playerCooldowns = new HashMap<>();
 
-                for (String itemId : config.getConfigurationSection(uuidString).getKeys(false)) {
+                for (String itemId : section.getKeys(false)) {
                     long endTime = config.getLong(uuidString + "." + itemId);
 
                     if (endTime > System.currentTimeMillis()) {
@@ -54,45 +60,41 @@ public class ItemCooldownManager implements Listener {
                 if (!playerCooldowns.isEmpty()) {
                     cooldowns.put(uuid, playerCooldowns);
                 }
-            } catch (IllegalArgumentException | NullPointerException exception) {
+            } catch (IllegalArgumentException exception) {
                 plugin.getLogger().warning("Nieprawidlowy wpis cooldownu: " + uuidString);
             }
         }
     }
 
-    /**
-     * Zwraca procent skrócenia cooldownu.
-     * Na razie 0%, ponieważ system talizmanów nie jest jeszcze podłączony.
-     *
-     * Później podłączymy tutaj wartość Talizmanu Świątecznego Czasu.
-     */
     public double getReductionPercent(Player player) {
         return 0.0;
     }
 
-    /**
-     * Próbuje rozpocząć cooldown.
-     *
-     * Zwraca false, jeśli gracz ma już aktywny cooldown.
-     * Zwraca true, jeśli cooldown został rozpoczęty.
-     */
     public boolean tryStartCooldown(
             Player player,
             String itemId,
             String displayName,
             long baseDurationMillis
     ) {
-        UUID uuid = player.getUniqueId();
-        long now = System.currentTimeMillis();
-
-        Map<String, Long> playerCooldowns =
-                cooldowns.computeIfAbsent(uuid, key -> new HashMap<>());
-
-        Long currentEnd = playerCooldowns.get(itemId);
-
-        if (currentEnd != null && currentEnd > now) {
+        if (isOnCooldown(player, itemId)) {
             return false;
         }
+
+        setCooldown(player, itemId, displayName, baseDurationMillis);
+        return true;
+    }
+
+    /**
+     * Ustawia cooldown niezależnie od tego, czy gracz ma już aktywny.
+     * Nadpisuje poprzedni czas.
+     */
+    public void setCooldown(
+            Player player,
+            String itemId,
+            String displayName,
+            long baseDurationMillis
+    ) {
+        UUID uuid = player.getUniqueId();
 
         double reduction = getReductionPercent(player);
         reduction = Math.max(0.0, Math.min(100.0, reduction));
@@ -102,7 +104,10 @@ public class ItemCooldownManager implements Listener {
                 Math.round(baseDurationMillis * (1.0 - reduction / 100.0))
         );
 
-        long endTime = now + finalDuration;
+        long endTime = System.currentTimeMillis() + finalDuration;
+
+        Map<String, Long> playerCooldowns =
+                cooldowns.computeIfAbsent(uuid, key -> new HashMap<>());
 
         playerCooldowns.put(itemId, endTime);
 
@@ -115,8 +120,6 @@ public class ItemCooldownManager implements Listener {
                 displayName,
                 finalDuration
         );
-
-        return true;
     }
 
     public boolean isOnCooldown(Player player, String itemId) {
@@ -182,6 +185,7 @@ public class ItemCooldownManager implements Listener {
     private String getDisplayName(String itemId) {
         return switch (itemId) {
             case "koniczynka" -> "&a&lKoniczynka";
+            case "lodolap" -> "&b&lLodołap";
             default -> "&f" + itemId;
         };
     }
