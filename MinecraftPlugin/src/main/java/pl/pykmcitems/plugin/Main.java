@@ -24,10 +24,8 @@ public class Main extends JavaPlugin {
     @Override
     public void onEnable() {
 
-        // TABLICA COOLDOWNÓW
         cooldownScoreboard = new CooldownScoreboard(this);
 
-        // WSPÓLNY SYSTEM COOLDOWNÓW
         itemCooldownManager = new ItemCooldownManager(
                 this,
                 cooldownScoreboard
@@ -38,7 +36,6 @@ public class Main extends JavaPlugin {
                 this
         );
 
-        // PRZEDMIOTY
         getServer().getPluginManager().registerEvents(new Koniczynka(this), this);
         getServer().getPluginManager().registerEvents(new Rog(this), this);
         getServer().getPluginManager().registerEvents(new Glodomiot(this), this);
@@ -69,7 +66,12 @@ public class Main extends JavaPlugin {
 
         talizmanyGUI = new TalizmanyGUI(this, talizmanyManager);
 
-        getServer().getPluginManager().registerEvents(talizmanyGUI, this);
+        getServer().getPluginManager().registerEvents(
+                talizmanyGUI,
+                this
+        );
+
+        getLogger().info("PykMCItems zostal wlaczony!");
     }
 
     @Override
@@ -99,12 +101,12 @@ public class Main extends JavaPlugin {
             itemCooldownManager.save();
         }
 
-        if (cooldownScoreboard != null) {
-            cooldownScoreboard.shutdown();
-        }
-
         if (talizmanyManager != null) {
             talizmanyManager.save();
+        }
+
+        if (cooldownScoreboard != null) {
+            cooldownScoreboard.shutdown();
         }
 
         getLogger().info("PykMCItems zostal wylaczony!");
@@ -116,6 +118,10 @@ public class Main extends JavaPlugin {
 
     public ItemCooldownManager getItemCooldownManager() {
         return itemCooldownManager;
+    }
+
+    public TalizmanyManager getTalizmanyManager() {
+        return talizmanyManager;
     }
 
     // ==========================================
