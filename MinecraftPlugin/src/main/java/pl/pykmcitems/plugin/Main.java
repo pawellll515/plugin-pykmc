@@ -20,6 +20,7 @@ public class Main extends JavaPlugin {
     private ItemCooldownManager itemCooldownManager;
     private TalizmanyGUI talizmanyGUI;
     private TalizmanyManager talizmanyManager;
+    private PowiekszonyEnderChest powiekszonyEnderChest;
 
     @Override
     public void onEnable() {
@@ -78,10 +79,22 @@ public class Main extends JavaPlugin {
 
         talizmanyManager.updateAllIcons();
 
+        // BONUSY TALIZMANÓW
         TalizmanBonusy talizmanBonusy =
-        new TalizmanBonusy(this, talizmanyManager);
+                new TalizmanBonusy(this, talizmanyManager);
 
-        getServer().getPluginManager().registerEvents(talizmanBonusy, this);
+        getServer().getPluginManager().registerEvents(
+                talizmanBonusy,
+                this
+        );
+
+        // POWIĘKSZONY ENDER CHEST
+        powiekszonyEnderChest = new PowiekszonyEnderChest(this);
+
+        getServer().getPluginManager().registerEvents(
+                powiekszonyEnderChest,
+                this
+        );
 
         getLogger().info("PykMCItems zostal wlaczony!");
     }
@@ -117,6 +130,10 @@ public class Main extends JavaPlugin {
             talizmanyManager.save();
         }
 
+        if (powiekszonyEnderChest != null) {
+            powiekszonyEnderChest.saveAll();
+        }
+
         if (cooldownScoreboard != null) {
             cooldownScoreboard.shutdown();
         }
@@ -134,6 +151,10 @@ public class Main extends JavaPlugin {
 
     public TalizmanyManager getTalizmanyManager() {
         return talizmanyManager;
+    }
+
+    public PowiekszonyEnderChest getPowiekszonyEnderChest() {
+        return powiekszonyEnderChest;
     }
 
     // ==========================================
@@ -265,6 +286,13 @@ public class Main extends JavaPlugin {
 
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Ta komenda jest dostepna tylko dla graczy!");
+            return true;
+        }
+
+        if (command.getName().equalsIgnoreCase("ec")
+                || command.getName().equalsIgnoreCase("enderchest")) {
+
+            powiekszonyEnderChest.open(player);
             return true;
         }
 
