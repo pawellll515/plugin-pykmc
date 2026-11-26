@@ -47,6 +47,7 @@ public class TalizmanyGUI implements Listener {
 
     private Component text(String text) {
         return SERIALIZER.deserialize(text)
+                .decoration(TextDecoration.BOLD, false)
                 .decoration(TextDecoration.ITALIC, false);
     }
 
@@ -81,7 +82,9 @@ public class TalizmanyGUI implements Listener {
         Inventory inventory = Bukkit.createInventory(
                 holder,
                 rows * 9,
-                Component.text(title).decoration(TextDecoration.ITALIC, false)
+                Component.text(title)
+                        .decoration(TextDecoration.BOLD, false)
+                        .decoration(TextDecoration.ITALIC, false)
         );
 
         holder.inventory = inventory;
@@ -99,7 +102,6 @@ public class TalizmanyGUI implements Listener {
                 "talizmany"
         );
 
-        // Lista talizmanów - 2 rząd, 3 slot
         inventory.setItem(11, createItem(
                 Material.BOOK,
                 -1,
@@ -111,7 +113,6 @@ public class TalizmanyGUI implements Listener {
                 "» &fKliknij, aby otworzyć!"
         ));
 
-        // Zarządzanie - 2 rząd, 7 slot
         inventory.setItem(15, createItem(
                 Material.WHITE_DYE,
                 5,
@@ -149,7 +150,7 @@ public class TalizmanyGUI implements Listener {
                 Material.WHITE_DYE,
                 12,
                 "&b🛡 Talizman odporności II",
-                "&b| 8% &7odporności na obrażenia."
+                "&b| +8% &7odporności na obrażenia."
         ));
 
         // ODPORNOŚĆ III
@@ -158,11 +159,11 @@ public class TalizmanyGUI implements Listener {
                 11,
                 "&b🛡 Talizman odporności III",
                 "&b| ???% &7odporności na obrażenia.",
-                "&b| &7Zakres losowania : &b+10% &7- &b15%",
+                "&b| &7Zakres losowania: &b+10% &7- &b15%",
                 "",
                 "&e☆ &bBonus maksymalnego poziomu:",
-                "&7Kiedy przyjmujesz obrażenie,",
-                "masz szansę otrzymać &ezłote serce &7absorpcji"
+                "&7Kiedy przyjmujesz obrażenia,",
+                "&7masz szansę otrzymać &ezłote serce &7absorpcji."
         ));
 
         // SIŁA I
@@ -170,7 +171,7 @@ public class TalizmanyGUI implements Listener {
                 Material.WHITE_DYE,
                 7,
                 "&d⚔ Talizman siły I",
-                "&d| 4% &7bonusowych obrażeń."
+                "&d| +4% &7bonusowych obrażeń."
         ));
 
         // SIŁA II
@@ -178,7 +179,7 @@ public class TalizmanyGUI implements Listener {
                 Material.WHITE_DYE,
                 6,
                 "&d⚔ Talizman siły II",
-                "&d| 6% &7bonusowych obrażeń."
+                "&d| +6% &7bonusowych obrażeń."
         ));
 
         // SIŁA III
@@ -187,21 +188,21 @@ public class TalizmanyGUI implements Listener {
                 5,
                 "&d⚔ Talizman siły III",
                 "&d| ???% &7bonusowych obrażeń.",
-                "&d| &7Zakres losowania : &d+8% &7- &d15%",
+                "&d| &7Zakres losowania: &d+8% &7- &d15%",
                 "",
                 "&e☆ &bBonus maksymalnego poziomu:",
                 "&7Po zjedzeniu czegokolwiek istnieje szansa,",
-                "na otrzymanie efektu &eszybkości &7na &e10 sekund"
+                "&7na otrzymanie efektu &eszybkości &7na &e10 sekund."
         ));
 
-        // SZYBKOŚĆ III
+        // SŁODKOŚCI III
         inventory.setItem(15, createItem(
                 Material.ORANGE_DYE,
                 1,
-                "&b🍬 Talizman szybkości III",
-                "&e| +1s &7czasu trwania regeneracji z złotych jabłek",
+                "&b🍬 Talizman słodkości III",
+                "&e| +1s &7czasu trwania regeneracji ze złotych jabłek.",
                 "",
-                "» &fZwiększa obrażenia krytyczne"
+                "» &fZwiększa obrażenia krytyczne."
         ));
 
         // TALIZMAN DROPU
@@ -211,7 +212,7 @@ public class TalizmanyGUI implements Listener {
                 "&b✉ Talizman dropu",
                 "&7» Po &czabiciu &7gracza jego przedmioty",
                 "» &7trafiają do wolnego miejsca",
-                "» &7w Twoim &denderchescie"
+                "» &7w Twoim &denderchescie."
         ));
 
         // ŚWIĄTECZNY CZAS
@@ -221,11 +222,11 @@ public class TalizmanyGUI implements Listener {
                 "&f❄ Talizman Świątecznego czasu",
                 "&f| -???% &7cooldownu na użycie przedmiotów eventowych.",
                 "",
-                "&7» &fTalizman eventowy - posiada tylko 1 poziom",
+                "&7» &fTalizman eventowy - posiada tylko 1 poziom.",
                 "&f| &7Zakres losowania: &e+5% &7- &e20%"
         ));
 
-        // POWRÓT - ostatni slot
+        // POWRÓT
         inventory.setItem(53, createItem(
                 Material.RED_STAINED_GLASS_PANE,
                 -1,
@@ -246,14 +247,12 @@ public class TalizmanyGUI implements Listener {
                 "twoje talizmany"
         );
 
-        // Nagłówek
         inventory.setItem(4, createItem(
                 Material.OAK_SIGN,
                 -1,
                 "&6Talizmany"
         ));
 
-        // Wolne miejsca
         inventory.setItem(20, createItem(
                 Material.BARRIER,
                 -1,
@@ -272,7 +271,6 @@ public class TalizmanyGUI implements Listener {
                 "&cWolne miejsce"
         ));
 
-        // Powrót
         inventory.setItem(45, createItem(
                 Material.RED_STAINED_GLASS_PANE,
                 -1,
