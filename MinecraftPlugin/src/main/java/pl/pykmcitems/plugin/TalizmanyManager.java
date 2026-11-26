@@ -1,5 +1,7 @@
+
 package pl.pykmcitems.plugin;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -37,18 +39,19 @@ public final class TalizmanyManager {
         load();
     }
 
+    // ==========================================
+    // ZAKŁADANIE TALIZMANU
+    // ==========================================
+
     public boolean equip(Player player, ItemStack item) {
         if (item == null || !item.hasItemMeta()) return false;
 
-        String id = item.getItemMeta()
-                .getPersistentDataContainer()
-                .get(idKey, PersistentDataType.STRING);
-
+        String id = getId(item);
         if (id == null) return false;
 
-        UUID uuid = player.getUniqueId();
         List<ItemStack> list = equipped.computeIfAbsent(
-                uuid, ignored -> new ArrayList<>()
+                player.getUniqueId(),
+                ignored -> new ArrayList<>()
         );
 
         if (list.size() >= MAX_TALIZMANOW) {
@@ -61,18 +64,27 @@ public final class TalizmanyManager {
         for (ItemStack current : list) {
             String currentId = getId(current);
 
-            if (currentId != null && getFamily(currentId).equals(family)) {
-                player.sendMessage("§cMasz już założony talizman z tej rodziny!");
+            if (currentId != null &&
+                    getFamily(currentId).equals(family)) {
+                player.sendMessage(
+                        "§cMasz już założony talizman z tej rodziny!"
+                );
                 return false;
             }
         }
 
         list.add(item.clone());
+
         save();
         updateAllIcons();
 
+        player.sendMessage("§aZałożono talizman!");
         return true;
     }
+
+    // ==========================================
+    // ZDEJMOWANIE TALIZMANU
+    // ==========================================
 
     public boolean unequip(Player player, int slot) {
         List<ItemStack> list = equipped.get(player.getUniqueId());
@@ -82,18 +94,36 @@ public final class TalizmanyManager {
         }
 
         list.remove(slot);
+
+        if (list.isEmpty()) {
+            equipped.remove(player.getUniqueId());
+        }
+
         save();
         updateAllIcons();
 
+        player.sendMessage("§aZdjęto talizman!");
         return true;
     }
+
+    // ==========================================
+    // POBIERANIE TALIZMANÓW
+    // ==========================================
 
     public List<ItemStack> getEquipped(Player player) {
         List<ItemStack> list = equipped.get(player.getUniqueId());
 
-        if (list == null) return new ArrayList<>();
+        if (list == null) {
+            return new ArrayList<>();
+        }
 
-        return new ArrayList<>(list);
+        List<ItemStack> copy = new ArrayList<>();
+
+        for (ItemStack item : list) {
+            copy.add(item.clone());
+        }
+
+        return copy;
     }
 
     public double getValue(Player player, String id) {
@@ -101,7 +131,11 @@ public final class TalizmanyManager {
             if (id.equals(getId(item))) {
                 return item.getItemMeta()
                         .getPersistentDataContainer()
-                        .getOrDefault(valueKey, PersistentDataType.DOUBLE, 0.0);
+                        .getOrDefault(
+                                valueKey,
+                                PersistentDataType.DOUBLE,
+                                0.0
+                        );
             }
         }
 
@@ -113,13 +147,18 @@ public final class TalizmanyManager {
                 .anyMatch(item -> id.equals(getId(item)));
     }
 
+    // ==========================================
+    // CZYSZCZENIE TALIZMANÓW
+    // ==========================================
+
     public void clear(Player player, boolean drop) {
         List<ItemStack> list = equipped.remove(player.getUniqueId());
 
         if (list != null && drop) {
             for (ItemStack item : list) {
                 player.getWorld().dropItemNaturally(
-                        player.getLocation(), item.clone()
+                        player.getLocation(),
+                        item.clone()
                 );
             }
         }
@@ -128,45 +167,83 @@ public final class TalizmanyManager {
         updateAllIcons();
     }
 
-    public void updateAllIcons() {
-        for (Player viewer : Bukkit.getOnlinePlayers()) {
-            Scoreboard board = viewer.getScoreboard();
+    // ==========================================
+    // IKONY NAD GŁOWĄ
+    // ==========================================
 
-            for (Player target : Bukkit.getOnlinePlayers()) {
-                String teamName = "taliz" + target.getEntityId();
+    private String getIcon(String id) {
+        if (id == null) return "";
 
-                Team team = board.getTeam(teamName);
+        if (id.startsWith("odpornosc_")) return "🛡️";
+        if (id.startsWith("sila_")) return "⚔";
+        if (id.equals("slodkosci_3")) return "🍬";
+        if (id.equals("drop")) return "✉";
+        if (id.equals("swiateczny_czas")) return "❄";
 
-                if (team == null) {
-                    team = board.registerNewTeam(teamName);
-                }
+        return "";
+    }
 
-                if (!team.hasEntry(target.getName())) {
-                    team.addEntry(target.getName());
-                }
+    private String getTeamName(Player target) {
+        return "taliz" + target.getEntityId();
+    }
 
-                StringBuilder icons = new StringBuilder();
+    public void updateViewerBoard(Player viewer) {
+        Scoreboard board = viewer.getScoreboard();
 
-                for (ItemStack item : getEquipped(target)) {
-                    if (item.hasItemMeta()
-                            && item.getItemMeta().hasDisplayName()) {
-                        String name = item.getItemMeta().getDisplayName();
+        for (Player target : Bukkit.getOnlinePlayers()) {
+            String teamName = getTeamName(target);
 
-                        if (name.length() >= 2) {
-                            icons.append(name, 0, 2);
-                        }
+            Team team = board.getTeam(teamName);
+
+            StringBuilder icons = new StringBuilder();
+
+            for (ItemStack item : getEquipped(target)) {
+                String id = getId(item);
+                String icon = getIcon(id);
+
+                if (!icon.isEmpty()) {
+                    if (icons.length() > 0) {
+                        icons.append(" ");
                     }
-                }
 
-                team.setSuffix(org.bukkit.ChatColor.translateAlternateColorCodes(
-                        '&', " " + icons
-                ));
+                    icons.append(icon);
+                }
             }
+
+            if (icons.length() == 0) {
+                if (team != null) {
+                    team.removeEntry(target.getName());
+                    team.unregister();
+                }
+                continue;
+            }
+
+            if (team == null) {
+                team = board.registerNewTeam(teamName);
+            }
+
+            if (!team.hasEntry(target.getName())) {
+                team.addEntry(target.getName());
+            }
+
+            team.prefix(Component.text(icons + " "));
         }
     }
 
+    public void updateAllIcons() {
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            updateViewerBoard(viewer);
+        }
+    }
+
+    // ==========================================
+    // PDC
+    // ==========================================
+
     private String getId(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return null;
+        if (item == null || !item.hasItemMeta()) {
+            return null;
+        }
 
         return item.getItemMeta()
                 .getPersistentDataContainer()
@@ -180,7 +257,13 @@ public final class TalizmanyManager {
         return id;
     }
 
+    // ==========================================
+    // WCZYTYWANIE
+    // ==========================================
+
     private void load() {
+        equipped.clear();
+
         for (String key : config.getKeys(false)) {
             try {
                 UUID uuid = UUID.fromString(key);
@@ -191,28 +274,51 @@ public final class TalizmanyManager {
                 List<ItemStack> items = new ArrayList<>();
 
                 for (Object object : stored) {
-                    if (object instanceof ItemStack item) {
-                        items.add(item);
+                    if (object instanceof ItemStack item
+                            && getId(item) != null) {
+                        items.add(item.clone());
                     }
                 }
 
-                equipped.put(uuid, items);
+                if (!items.isEmpty()) {
+                    equipped.put(uuid, items);
+                }
+
             } catch (IllegalArgumentException ignored) {
+                plugin.getLogger().warning(
+                        "Nieprawidłowy UUID talizmanów: " + key
+                );
             }
         }
     }
 
+    // ==========================================
+    // ZAPIS
+    // ==========================================
+
     public void save() {
+        for (String key : new HashSet<>(config.getKeys(false))) {
+            config.set(key, null);
+        }
 
         for (Map.Entry<UUID, List<ItemStack>> entry : equipped.entrySet()) {
-            config.set(entry.getKey().toString(), entry.getValue());
+            config.set(
+                    entry.getKey().toString(),
+                    entry.getValue()
+            );
         }
 
         try {
+            if (!plugin.getDataFolder().exists()) {
+                plugin.getDataFolder().mkdirs();
+            }
+
             config.save(file);
+
         } catch (IOException exception) {
             plugin.getLogger().severe(
-                    "Nie udało się zapisać talizmanów: " + exception.getMessage()
+                    "Nie udało się zapisać talizmanów: "
+                            + exception.getMessage()
             );
         }
     }
