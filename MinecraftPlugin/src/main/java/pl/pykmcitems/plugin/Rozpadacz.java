@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
@@ -11,7 +12,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -26,12 +26,15 @@ public class Rozpadacz implements Listener {
 
     private final JavaPlugin plugin;
     private final NamespacedKey rozpadaczKey;
+    private final ItemCooldownManager cooldownManager;
 
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
+    // Indywidualna ochrona trafionych graczy
+    private final Map<UUID, Long> protectionCooldowns = new HashMap<>();
 
     public Rozpadacz(JavaPlugin plugin) {
         this.plugin = plugin;
         this.rozpadaczKey = new NamespacedKey(plugin, "rozpadacz");
+        this.cooldownManager = ((Main) plugin).getItemCooldownManager();
     }
 
     private boolean isRozpadacz(ItemStack item) {
@@ -72,12 +75,12 @@ public class Rozpadacz implements Listener {
 
         event.setCancelled(true);
 
-        UUID uuid = player.getUniqueId();
-        long now = System.currentTimeMillis();
-
-        if (cooldowns.containsKey(uuid)
-                && cooldowns.get(uuid) > now) {
-
+        if (!cooldownManager.tryStartCooldown(
+                player,
+                "rozpadacz",
+                "&4&lRozpadacz",
+                90_000L
+        )) {
             player.sendActionBar(
                     Component.text(
                             "Rozpadacz jest na cooldownie!",
@@ -88,9 +91,6 @@ public class Rozpadacz implements Listener {
             return;
         }
 
-        cooldowns.put(uuid, now + 90_000);
-        ((Main) plugin).getCooldownScoreboard().startCooldown(player, "rozpadacz", "&4&lRozpadacz", 90_000L);
-
         // Komunikat dla używającego
         player.sendActionBar(
                 Component.text("Rozpadacz ", NamedTextColor.DARK_RED)
@@ -100,6 +100,8 @@ public class Rozpadacz implements Listener {
                                 NamedTextColor.GRAY
                         ))
         );
+
+        long now = System.currentTimeMillis();
 
         // Trafianie graczy w promieniu 4 kratek
         for (Player target : player.getWorld().getPlayers()) {
@@ -114,11 +116,23 @@ public class Rozpadacz implements Listener {
                 continue;
             }
 
-            // Zabranie 33% aktualnego zdrowia
-            double currentHealth = target.getHealth();
-            double newHealth = currentHealth * 0.67;
+            UUID targetUUID = target.getUniqueId();
 
-            target.setHealth(Math.max(0.0, newHealth));
+            // Sprawdzenie indywidualnej ochrony gracza
+            Long protectionUntil = protectionCooldowns.get(targetUUID);
+
+            if (protectionUntil != null && protectionUntil > now) {
+                continue;
+            }
+
+            // Ochrona przed kolejnym Rozpadaczem przez 45 sekund
+            protectionCooldowns.put(targetUUID, now + 45_000L);
+
+            // Zabranie dokładnie 8 serc (16 punktów zdrowia)
+            double currentHealth = target.getHealth();
+            double newHealth = Math.max(0.0, currentHealth - 16.0);
+
+            target.setHealth(newHealth);
 
             // Efekt pioruna bez dodatkowych obrażeń
             target.getWorld().strikeLightningEffect(
@@ -134,7 +148,7 @@ public class Rozpadacz implements Listener {
                                     NamedTextColor.GRAY
                             ))
                             .append(Component.text(
-                                    "33%",
+                                    "8 serc",
                                     NamedTextColor.YELLOW
                             ))
                             .append(Component.text(
@@ -143,10 +157,5 @@ public class Rozpadacz implements Listener {
                             ))
             );
         }
-    }
-
-    @EventHandler
-    public void onQuit(PlayerQuitEvent event) {
-        cooldowns.remove(event.getPlayer().getUniqueId());
     }
 }
