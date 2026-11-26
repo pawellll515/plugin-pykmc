@@ -11,6 +11,10 @@ commands:
     description: Włącza lub wyłącza scoreboard cooldownów
     usage: /sb
 
+  talizmany:
+    description: Otwiera menu talizmanów
+    usage: /talizmany
+
   koniczyna:
     description: Nadaje Koniczynke
     usage: /koniczyna
@@ -87,7 +91,7 @@ commands:
     permission: pykmcitems.meduza
 
   berlo:
-    description: Daje Berło Drakuli
+    description: Nadaje Berło Drakuli
     usage: /berlo
     permission: pykmcitems.berlo
 
