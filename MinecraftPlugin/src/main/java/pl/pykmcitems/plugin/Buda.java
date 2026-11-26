@@ -30,10 +30,10 @@ import java.util.UUID;
 public class Buda implements Listener {
 
     private final JavaPlugin plugin;
+    private final ItemCooldownManager cooldownManager;
     private final NamespacedKey budaKey;
 
     private final Map<UUID, Cage> cages = new HashMap<>();
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
 
     private static final long COOLDOWN = 90_000L;
     private static final int FIGHT_TIME = 10;
@@ -41,6 +41,7 @@ public class Buda implements Listener {
 
     public Buda(JavaPlugin plugin) {
         this.plugin = plugin;
+        this.cooldownManager = ((Main) plugin).getItemCooldownManager();
         this.budaKey = new NamespacedKey(plugin, "buda");
     }
 
@@ -82,13 +83,23 @@ public class Buda implements Listener {
             return;
         }
 
-        long now = System.currentTimeMillis();
-        long lastUse = cooldowns.getOrDefault(attacker.getUniqueId(), 0L);
+        if (!cooldownManager.tryStartCooldown(
+                attacker,
+                "buda",
+                "&e&lBuda",
+                COOLDOWN
+        )) {
+            long remaining = cooldownManager.getRemainingCooldown(
+                    attacker,
+                    "buda"
+            );
 
-        if (now - lastUse < COOLDOWN) {
-            long remaining = (COOLDOWN - (now - lastUse)) / 1000L;
-            attacker.sendMessage("§cBuda jest jeszcze na cooldownie! §7Pozostało: §e"
-                    + remaining + "s");
+            long seconds = (remaining + 999L) / 1000L;
+
+            attacker.sendMessage(
+                    "§cBuda jest jeszcze na cooldownie! §7Pozostało: §e"
+                            + seconds + "s"
+            );
             return;
         }
 
@@ -132,10 +143,6 @@ public class Buda implements Listener {
 
         attacker.setWorldBorder(attackerBorder);
         target.setWorldBorder(targetBorder);
-
-        cooldowns.put(attacker.getUniqueId(), System.currentTimeMillis());
-        ((Main) plugin).getCooldownScoreboard()
-                .startCooldown(attacker, "buda", "&e&lBuda", COOLDOWN);
 
         if (attacker.isGliding()) {
             attacker.setGliding(false);
@@ -321,9 +328,6 @@ public class Buda implements Listener {
         if (cage != null) {
             endFight(cage, "§cWalka zakończona przez wyjście gracza!");
         }
-
-        // Reset cooldownu Budy po wyjściu z serwera.
-        cooldowns.remove(player.getUniqueId());
     }
 
     private static class Cage {
