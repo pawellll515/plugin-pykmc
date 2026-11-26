@@ -15,13 +15,29 @@ public class Main extends JavaPlugin {
     private BerloDrakuli berloDrakuli;
     private ObsikanaSniezka obsikanaSniezka;
     private LukWiedzmy lukWiedzmy;
+
     private CooldownScoreboard cooldownScoreboard;
+    private ItemCooldownManager itemCooldownManager;
     private TalizmanyGUI talizmanyGUI;
 
     @Override
     public void onEnable() {
+
+        // TABLICA COOLDOWNÓW
         cooldownScoreboard = new CooldownScoreboard(this);
 
+        // WSPÓLNY SYSTEM COOLDOWNÓW
+        itemCooldownManager = new ItemCooldownManager(
+                this,
+                cooldownScoreboard
+        );
+
+        getServer().getPluginManager().registerEvents(
+                itemCooldownManager,
+                this
+        );
+
+        // PRZEDMIOTY
         getServer().getPluginManager().registerEvents(new Koniczynka(this), this);
         getServer().getPluginManager().registerEvents(new Rog(this), this);
         getServer().getPluginManager().registerEvents(new Glodomiot(this), this);
@@ -56,6 +72,7 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
+
         if (zlamaneSerce != null) {
             zlamaneSerce.cleanup();
         }
@@ -76,6 +93,10 @@ public class Main extends JavaPlugin {
             lukWiedzmy.cleanup();
         }
 
+        if (itemCooldownManager != null) {
+            itemCooldownManager.save();
+        }
+
         if (cooldownScoreboard != null) {
             cooldownScoreboard.shutdown();
         }
@@ -85,6 +106,10 @@ public class Main extends JavaPlugin {
 
     public CooldownScoreboard getCooldownScoreboard() {
         return cooldownScoreboard;
+    }
+
+    public ItemCooldownManager getItemCooldownManager() {
+        return itemCooldownManager;
     }
 
     // ==========================================
@@ -129,6 +154,7 @@ public class Main extends JavaPlugin {
     }
 
     private boolean obsluzDajTalizman(CommandSender sender, String[] args) {
+
         if (args.length < 2 || args.length > 3) {
             sender.sendMessage("§cUżycie: /dajtalizman <gracz> <id> [wartosc]");
             return true;
@@ -151,6 +177,7 @@ public class Main extends JavaPlugin {
         Double wartosc = null;
 
         if (wymagaWartosci(id)) {
+
             if (args.length != 3) {
                 sender.sendMessage("§cTen talizman wymaga podania wartości procentowej!");
                 return true;
@@ -167,6 +194,7 @@ public class Main extends JavaPlugin {
                 sender.sendMessage("§cNieprawidłowa wartość dla tego talizmanu!");
                 return true;
             }
+
         } else if (args.length != 2) {
             sender.sendMessage("§cTen talizman nie przyjmuje wartości procentowej!");
             return true;
@@ -183,7 +211,10 @@ public class Main extends JavaPlugin {
         var pozostale = odbiorca.getInventory().addItem(talizman);
 
         for (ItemStack item : pozostale.values()) {
-            odbiorca.getWorld().dropItemNaturally(odbiorca.getLocation(), item);
+            odbiorca.getWorld().dropItemNaturally(
+                    odbiorca.getLocation(),
+                    item
+            );
         }
 
         sender.sendMessage("§aNadano talizman graczowi §e" + odbiorca.getName() + "§a.");
@@ -224,6 +255,7 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("ustawglowke")) {
+
             if (!player.hasPermission("pykmcitems.ustawglowke")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -257,6 +289,7 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("obsikanasniezka")) {
+
             if (!player.hasPermission("pykmcitems.obsikanasniezka")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -268,6 +301,7 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("lukwiedzmy")) {
+
             if (!player.hasPermission("pykmcitems.lukwiedzmy")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -303,6 +337,7 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("topor")) {
+
             if (!player.hasPermission("pykmcitems.topor")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -314,6 +349,7 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("hydra")) {
+
             if (!player.hasPermission("pykmcitems.hydra")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -325,6 +361,7 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("lodolap")) {
+
             if (!player.hasPermission("pykmcitems.lodolap")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -336,6 +373,7 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("buda")) {
+
             if (!player.hasPermission("pykmcitems.buda")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -347,6 +385,7 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("zlamane")) {
+
             if (!player.hasPermission("pykmcitems.zlamane")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -358,6 +397,7 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("berlo")) {
+
             if (!player.hasPermission("pykmcitems.berlo")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
@@ -369,6 +409,7 @@ public class Main extends JavaPlugin {
         }
 
         if (command.getName().equalsIgnoreCase("meduza")) {
+
             if (!player.hasPermission("pykmcitems.meduza")) {
                 player.sendMessage("§cNie masz uprawnien do tej komendy!");
                 return true;
