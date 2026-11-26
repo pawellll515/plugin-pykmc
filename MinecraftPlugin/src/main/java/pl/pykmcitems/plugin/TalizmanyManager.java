@@ -47,27 +47,20 @@ public final class TalizmanyManager implements Listener {
         load();
     }
 
-    // ==========================================
-    // ZAKŁADANIE TALIZMANU
-    // ==========================================
-
     public boolean equip(Player player, ItemStack item) {
         if (item == null || !item.hasItemMeta()) {
             return false;
         }
 
         String id = getId(item);
-
-        if (id == null) {
-            return false;
-        }
+        if (id == null) return false;
 
         List<ItemStack> list = equipped.computeIfAbsent(
                 player.getUniqueId(),
                 ignored -> new ArrayList<>()
         );
 
-        if (list.size() >= MAX_TALIZANOW) {
+        if (list.size() >= MAX_TALIZMANOW) {
             player.sendMessage("§cMożesz mieć maksymalnie 3 talizmany!");
             return false;
         }
@@ -77,11 +70,8 @@ public final class TalizmanyManager implements Listener {
         for (ItemStack current : list) {
             String currentId = getId(current);
 
-            if (currentId != null
-                    && getFamily(currentId).equals(family)) {
-                player.sendMessage(
-                        "§cMasz już założony talizman z tej rodziny!"
-                );
+            if (currentId != null && getFamily(currentId).equals(family)) {
+                player.sendMessage("§cMasz już założony talizman z tej rodziny!");
                 return false;
             }
         }
@@ -95,16 +85,9 @@ public final class TalizmanyManager implements Listener {
         return true;
     }
 
-    // ==========================================
-    // ZAKŁADANIE TALIZMANU LPM W RĘCE
-    // ==========================================
-
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-
-        if (event.getHand() != EquipmentSlot.HAND) {
-            return;
-        }
+        if (event.getHand() != EquipmentSlot.HAND) return;
 
         if (event.getAction() != Action.LEFT_CLICK_AIR
                 && event.getAction() != Action.LEFT_CLICK_BLOCK) {
@@ -112,14 +95,10 @@ public final class TalizmanyManager implements Listener {
         }
 
         Player player = event.getPlayer();
-
         ItemStack item = player.getInventory().getItemInMainHand();
 
         String id = getId(item);
-
-        if (id == null) {
-            return;
-        }
+        if (id == null) return;
 
         if (!equip(player, item)) {
             event.setCancelled(true);
@@ -142,10 +121,6 @@ public final class TalizmanyManager implements Listener {
         event.setCancelled(true);
     }
 
-    // ==========================================
-    // ZDEJMOWANIE TALIZMANU
-    // ==========================================
-
     public boolean unequip(Player player, int slot) {
         List<ItemStack> list = equipped.get(player.getUniqueId());
 
@@ -159,8 +134,7 @@ public final class TalizmanyManager implements Listener {
             equipped.remove(player.getUniqueId());
         }
 
-        Map<Integer, ItemStack> leftovers =
-                player.getInventory().addItem(item);
+        Map<Integer, ItemStack> leftovers = player.getInventory().addItem(item);
 
         for (ItemStack leftover : leftovers.values()) {
             player.getWorld().dropItemNaturally(
@@ -183,10 +157,6 @@ public final class TalizmanyManager implements Listener {
 
         return true;
     }
-
-    // ==========================================
-    // POBIERANIE TALIZMANÓW
-    // ==========================================
 
     public List<ItemStack> getEquipped(Player player) {
         List<ItemStack> list = equipped.get(player.getUniqueId());
@@ -221,13 +191,10 @@ public final class TalizmanyManager implements Listener {
     }
 
     public boolean has(Player player, String id) {
-        return getEquipped(player).stream()
+        return getEquipped(player)
+                .stream()
                 .anyMatch(item -> id.equals(getId(item)));
     }
-
-    // ==========================================
-    // CZYSZCZENIE TALIZMANÓW
-    // ==========================================
 
     public void clear(Player player, boolean drop) {
         List<ItemStack> list = equipped.remove(player.getUniqueId());
@@ -245,14 +212,8 @@ public final class TalizmanyManager implements Listener {
         updateAllIcons();
     }
 
-    // ==========================================
-    // KOLOROWE IKONY NAD GŁOWĄ
-    // ==========================================
-
     private Component getIcon(String id) {
-        if (id == null) {
-            return Component.empty();
-        }
+        if (id == null) return null;
 
         if (id.startsWith("odpornosc_")) {
             return Component.text("🛡", NamedTextColor.AQUA);
@@ -274,7 +235,7 @@ public final class TalizmanyManager implements Listener {
             return Component.text("❄", NamedTextColor.WHITE);
         }
 
-        return Component.empty();
+        return null;
     }
 
     private String getTeamName(Player target) {
@@ -286,19 +247,15 @@ public final class TalizmanyManager implements Listener {
 
         for (Player target : Bukkit.getOnlinePlayers()) {
             String teamName = getTeamName(target);
-
             Team team = board.getTeam(teamName);
 
             Component icons = Component.empty();
             boolean first = true;
 
             for (ItemStack item : getEquipped(target)) {
-                String id = getId(item);
-                Component icon = getIcon(id);
+                Component icon = getIcon(getId(item));
 
-                if (icon.equals(Component.empty())) {
-                    continue;
-                }
+                if (icon == null) continue;
 
                 if (!first) {
                     icons = icons.append(Component.text(" "));
@@ -335,10 +292,6 @@ public final class TalizmanyManager implements Listener {
         }
     }
 
-    // ==========================================
-    // PDC
-    // ==========================================
-
     private String getId(ItemStack item) {
         if (item == null || !item.hasItemMeta()) {
             return null;
@@ -350,15 +303,16 @@ public final class TalizmanyManager implements Listener {
     }
 
     private String getFamily(String id) {
-        if (id.startsWith("odpornosc_")) return "odpornosc";
-        if (id.startsWith("sila_")) return "sila";
+        if (id.startsWith("odpornosc_")) {
+            return "odpornosc";
+        }
+
+        if (id.startsWith("sila_")) {
+            return "sila";
+        }
 
         return id;
     }
-
-    // ==========================================
-    // WCZYTYWANIE
-    // ==========================================
 
     private void load() {
         equipped.clear();
@@ -373,8 +327,7 @@ public final class TalizmanyManager implements Listener {
                 List<ItemStack> items = new ArrayList<>();
 
                 for (Object object : stored) {
-                    if (object instanceof ItemStack item
-                            && getId(item) != null) {
+                    if (object instanceof ItemStack item && getId(item) != null) {
                         items.add(item.clone());
                     }
                 }
@@ -391,20 +344,13 @@ public final class TalizmanyManager implements Listener {
         }
     }
 
-    // ==========================================
-    // ZAPIS
-    // ==========================================
-
     public void save() {
         for (String key : new HashSet<>(config.getKeys(false))) {
             config.set(key, null);
         }
 
         for (Map.Entry<UUID, List<ItemStack>> entry : equipped.entrySet()) {
-            config.set(
-                    entry.getKey().toString(),
-                    entry.getValue()
-            );
+            config.set(entry.getKey().toString(), entry.getValue());
         }
 
         try {
