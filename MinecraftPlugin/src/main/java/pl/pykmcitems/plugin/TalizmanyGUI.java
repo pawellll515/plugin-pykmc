@@ -1,8 +1,5 @@
-package pl.pykmcitems.plugin;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+package pl.pykmcitems.plugin;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -15,19 +12,19 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class TalizmanyGUI implements Listener {
 
-    private static final LegacyComponentSerializer SERIALIZER =
-            LegacyComponentSerializer.legacyAmpersand();
+    private final JavaPlugin plugin;
+    private final TalizmanyManager manager;
 
     private enum Menu {
-        MAIN,
-        LIST,
-        OWN
+        MAIN, LIST, OWN
     }
 
     private static class MenuHolder implements InventoryHolder {
@@ -44,283 +41,161 @@ public class TalizmanyGUI implements Listener {
         }
     }
 
-    private Component text(String text) {
-        return SERIALIZER.deserialize(text)
-                .decoration(TextDecoration.BOLD, false)
-                .decoration(TextDecoration.ITALIC, false);
-    }
-
-    private ItemStack createItem(
-            Material material,
-            int customModelData,
-            String name,
-            String... loreLines
-    ) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-
-        meta.displayName(text(name));
-
-        List<Component> lore = new ArrayList<>();
-        for (String line : loreLines) {
-            lore.add(line.isEmpty() ? Component.empty() : text(line));
-        }
-
-        meta.lore(lore);
-
-        if (customModelData >= 0) {
-            meta.setCustomModelData(customModelData);
-        }
-
-        item.setItemMeta(meta);
-        return item;
+    public TalizmanyGUI(JavaPlugin plugin, TalizmanyManager manager) {
+        this.plugin = plugin;
+        this.manager = manager;
     }
 
     private Inventory createInventory(Menu menu, int rows, String title) {
         MenuHolder holder = new MenuHolder(menu);
         Inventory inventory = Bukkit.createInventory(
-                holder,
-                rows * 9,
-                Component.text(title)
-                        .decoration(TextDecoration.BOLD, false)
-                        .decoration(TextDecoration.ITALIC, false)
+                holder, rows * 9, title
         );
-
         holder.inventory = inventory;
         return inventory;
     }
 
-    // ==========================================
-    // GŁÓWNE MENU
-    // ==========================================
+    private ItemStack button(Material material, String name) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(name);
+        item.setItemMeta(meta);
+        return item;
+    }
 
-    public void openMain(Player player) {
-        Inventory inventory = createInventory(
-                Menu.MAIN,
-                3,
-                "talizmany"
-        );
+    private void openMain(Player player) {
+        Inventory inventory = createInventory(Menu.MAIN, 3, "talizmany");
 
-        inventory.setItem(11, createItem(
-                Material.BOOK,
-                -1,
-                "&6Lista talizmanów",
-                "",
-                "» Zobacz wszystkie dostępne talizmany",
-                "» dostępne na serwerze.",
-                "",
-                "» &fKliknij, aby otworzyć!"
+        inventory.setItem(11, button(
+                Material.BOOK, "§6Lista talizmanów"
         ));
 
-        inventory.setItem(15, createItem(
-                Material.WHITE_DYE,
-                5,
-                "&fZarządzaj talizmanami",
-                "",
-                "» Zarządzaj założonymi talizmanami",
-                "» i sprawdzaj ich bonusy",
-                "&fKliknij, aby otworzyć!"
+        inventory.setItem(15, button(
+                Material.WHITE_DYE, "§fZarządzaj talizmanami"
         ));
 
         player.openInventory(inventory);
     }
-
-    // ==========================================
-    // LISTA TALIZMANÓW
-    // ==========================================
 
     private void openList(Player player) {
         Inventory inventory = createInventory(
-                Menu.LIST,
-                6,
-                "lista talizmanów"
+                Menu.LIST, 6, "lista talizmanów"
         );
 
-        // ODPORNOŚĆ I
-        inventory.setItem(11, createItem(
-                Material.WHITE_DYE,
-                13,
-                "&b🛡 Talizman odporności I",
-                "&b| +5% &7odporności na obrażenia."
+        inventory.setItem(11, Itemy.talizmanOdpornosciI(plugin));
+        inventory.setItem(20, Itemy.talizmanOdpornosciII(plugin));
+        inventory.setItem(29, Itemy.talizmanOdpornosciIII(
+                plugin, losuj(10, 15)
         ));
 
-        // ODPORNOŚĆ II
-        inventory.setItem(20, createItem(
-                Material.WHITE_DYE,
-                12,
-                "&b🛡 Talizman odporności II",
-                "&b| +8% &7odporności na obrażenia."
+        inventory.setItem(13, Itemy.talizmanSilyI(plugin));
+        inventory.setItem(22, Itemy.talizmanSilyII(plugin));
+        inventory.setItem(31, Itemy.talizmanSilyIII(
+                plugin, losuj(8, 15)
         ));
 
-        // ODPORNOŚĆ III
-        inventory.setItem(29, createItem(
-                Material.WHITE_DYE,
-                11,
-                "&b🛡 Talizman odporności III",
-                "&b| ???% &7odporności na obrażenia.",
-                "&b| &7Zakres losowania: &b+10% &7- &b15%",
-                "",
-                "&e☆ &bBonus maksymalnego poziomu:",
-                "&7Kiedy przyjmujesz obrażenia,",
-                "&7masz szansę otrzymać &ezłote serce &7absorpcji."
+        inventory.setItem(15, Itemy.talizmanSlodkosciIII(plugin));
+        inventory.setItem(24, Itemy.talizmanDropu(plugin));
+
+        inventory.setItem(33, Itemy.talizmanSwiatecznegoCzasu(
+                plugin, losuj(5, 20)
         ));
 
-        // SIŁA I
-        inventory.setItem(13, createItem(
-                Material.WHITE_DYE,
-                7,
-                "&d⚔ Talizman siły I",
-                "&d| +4% &7bonusowych obrażeń."
-        ));
-
-        // SIŁA II
-        inventory.setItem(22, createItem(
-                Material.WHITE_DYE,
-                6,
-                "&d⚔ Talizman siły II",
-                "&d| +6% &7bonusowych obrażeń."
-        ));
-
-        // SIŁA III
-        inventory.setItem(31, createItem(
-                Material.WHITE_DYE,
-                5,
-                "&d⚔ Talizman siły III",
-                "&d| ???% &7bonusowych obrażeń.",
-                "&d| &7Zakres losowania: &d+8% &7- &d15%",
-                "",
-                "&e☆ &bBonus maksymalnego poziomu:",
-                "&7Po zjedzeniu czegokolwiek istnieje szansa,",
-                "&7na otrzymanie efektu &eszybkości &7na &e10 sekund."
-        ));
-
-        // SŁODKOŚCI III
-        inventory.setItem(15, createItem(
-                Material.ORANGE_DYE,
-                1,
-                "&b🍬 Talizman słodkości III",
-                "&e| +1s &7czasu trwania regeneracji ze złotych jabłek.",
-                "",
-                "» &fZwiększa obrażenia krytyczne."
-        ));
-
-        // TALIZMAN DROPU
-        inventory.setItem(24, createItem(
-                Material.LAPIS_LAZULI,
-                274,
-                "&b✉ Talizman dropu",
-                "&7» Po &czabiciu &7gracza jego przedmioty",
-                "» &7trafiają do wolnego miejsca",
-                "» &7w Twoim &denderchescie."
-        ));
-
-        // ŚWIĄTECZNY CZAS
-        inventory.setItem(33, createItem(
-                Material.WHITE_DYE,
-                14,
-                "&f❄ Talizman Świątecznego czasu",
-                "&f| -???% &7cooldownu na użycie przedmiotów eventowych.",
-                "",
-                "&7» &fTalizman eventowy - posiada tylko 1 poziom.",
-                "&f| &7Zakres losowania: &e+5% &7- &e20%"
-        ));
-
-        // POWRÓT
-        inventory.setItem(53, createItem(
-                Material.RED_STAINED_GLASS_PANE,
-                -1,
-                "&cPowrót"
+        inventory.setItem(53, button(
+                Material.RED_STAINED_GLASS_PANE, "§cPowrót"
         ));
 
         player.openInventory(inventory);
     }
 
-    // ==========================================
-    // TWOJE TALIZMANY
-    // ==========================================
+    private int losuj(int min, int max) {
+        return ThreadLocalRandom.current().nextInt(min, max + 1);
+    }
 
     private void openOwn(Player player) {
         Inventory inventory = createInventory(
-                Menu.OWN,
-                6,
-                "twoje talizmany"
+                Menu.OWN, 6, "twoje talizmany"
         );
 
-        inventory.setItem(4, createItem(
-                Material.OAK_SIGN,
-                -1,
-                "&6Talizmany"
-        ));
+        inventory.setItem(4, button(Material.OAK_SIGN, "§6Talizmany"));
 
-        inventory.setItem(20, createItem(
-                Material.BARRIER,
-                -1,
-                "&cWolne miejsce"
-        ));
+        int[] slots = {20, 22, 24};
+        List<ItemStack> equipped = manager.getEquipped(player);
 
-        inventory.setItem(22, createItem(
-                Material.BARRIER,
-                -1,
-                "&cWolne miejsce"
-        ));
+        for (int i = 0; i < slots.length; i++) {
+            if (i < equipped.size()) {
+                inventory.setItem(slots[i], equipped.get(i).clone());
+            } else {
+                inventory.setItem(slots[i], button(
+                        Material.BARRIER, "§cWolne miejsce"
+                ));
+            }
+        }
 
-        inventory.setItem(24, createItem(
-                Material.BARRIER,
-                -1,
-                "&cWolne miejsce"
-        ));
-
-        inventory.setItem(45, createItem(
-                Material.RED_STAINED_GLASS_PANE,
-                -1,
-                "&cPowrót"
+        inventory.setItem(45, button(
+                Material.RED_STAINED_GLASS_PANE, "§cPowrót"
         ));
 
         player.openInventory(inventory);
     }
 
-    // ==========================================
-    // OBSŁUGA KLIKNIĘĆ
-    // ==========================================
-
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        Inventory topInventory = event.getView().getTopInventory();
-
-        if (!(topInventory.getHolder() instanceof MenuHolder holder)) {
+        if (!(event.getView().getTopInventory().getHolder()
+                instanceof MenuHolder holder)) {
             return;
         }
 
         event.setCancelled(true);
 
-        if (!(event.getWhoClicked() instanceof Player player)) {
-            return;
-        }
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        if (event.getClickedInventory() != event.getView().getTopInventory()) return;
 
-        if (event.getClickedInventory() != topInventory) {
-            return;
-        }
+        // PPM nic nie robi.
+        if (event.isRightClick()) return;
 
         int slot = event.getRawSlot();
 
         switch (holder.menu) {
             case MAIN -> {
-                if (slot == 11) {
-                    openList(player);
-                } else if (slot == 15) {
-                    openOwn(player);
-                }
+                if (slot == 11) openList(player);
+                if (slot == 15) openOwn(player);
             }
 
             case LIST -> {
                 if (slot == 53) {
                     openMain(player);
+                    return;
+                }
+
+                ItemStack item = event.getCurrentItem();
+
+                if (item == null || item.getType() == Material.AIR) return;
+
+                if (manager.equip(player, item)) {
+                    player.sendMessage("§aZałożono talizman!");
+                    openOwn(player);
                 }
             }
 
             case OWN -> {
                 if (slot == 45) {
                     openMain(player);
+                    return;
+                }
+
+                int talismanSlot = switch (slot) {
+                    case 20 -> 0;
+                    case 22 -> 1;
+                    case 24 -> 2;
+                    default -> -1;
+                };
+
+                if (talismanSlot >= 0) {
+                    if (manager.unequip(player, talismanSlot)) {
+                        player.sendMessage("§aZdjęto talizman!");
+                        openOwn(player);
+                    }
                 }
             }
         }
