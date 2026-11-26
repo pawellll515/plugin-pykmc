@@ -34,6 +34,14 @@ commands:
     description: Nadaje Glodomiot
     usage: /glodomiot
     permission: pykmcitems.glodomiot
+    
+  ec:
+    description: Otwiera powiększony Ender Chest
+    usage: /ec
+
+  enderchest:
+    description: Otwiera powiększony Ender Chest
+    usage: /enderchest
 
   rozpadacz:
     description: Nadaje Rozpadacz
