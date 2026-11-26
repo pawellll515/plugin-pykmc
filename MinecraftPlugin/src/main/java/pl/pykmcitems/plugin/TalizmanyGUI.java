@@ -63,7 +63,7 @@ public class TalizmanyGUI implements Listener {
         return item;
     }
 
-    private void openMain(Player player) {
+    public void openMain(Player player) {
         Inventory inventory = createInventory(Menu.MAIN, 3, "talizmany");
 
         inventory.setItem(11, button(
