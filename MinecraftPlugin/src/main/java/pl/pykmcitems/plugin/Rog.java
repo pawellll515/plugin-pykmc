@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
@@ -11,9 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -23,20 +22,17 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 public class Rog implements Listener {
 
     private final JavaPlugin plugin;
     private final NamespacedKey hornKey;
-
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
+    private final ItemCooldownManager cooldownManager;
 
     public Rog(JavaPlugin plugin) {
         this.plugin = plugin;
         this.hornKey = new NamespacedKey(plugin, "rog_niebios");
+        this.cooldownManager = ((Main) plugin).getItemCooldownManager();
     }
 
     private boolean isHorn(ItemStack item) {
@@ -77,16 +73,14 @@ public class Rog implements Listener {
 
         event.setCancelled(true);
 
-        UUID uuid = player.getUniqueId();
-        long now = System.currentTimeMillis();
-
-        if (cooldowns.containsKey(uuid)
-                && cooldowns.get(uuid) > now) {
+        if (!cooldownManager.tryStartCooldown(
+                player,
+                "rog",
+                "&b&lRóg Niebios",
+                120_000L
+        )) {
             return;
         }
-
-        cooldowns.put(uuid, now + 120_000);
-        ((Main) plugin).getCooldownScoreboard().startCooldown(player, "rog", "&b&lRóg Niebios", 120_000L);
 
         // Tytuł dla osoby używającej rogu
         player.showTitle(
@@ -143,15 +137,5 @@ public class Rog implements Listener {
                     )
             );
         }
-    }
-
-    @EventHandler
-    public void onQuit(PlayerQuitEvent event) {
-        cooldowns.remove(event.getPlayer().getUniqueId());
-    }
-
-    @EventHandler
-    public void onDeath(PlayerDeathEvent event) {
-        cooldowns.remove(event.getEntity().getUniqueId());
     }
 }
