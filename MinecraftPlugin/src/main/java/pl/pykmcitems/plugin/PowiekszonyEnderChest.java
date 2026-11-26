@@ -1,126 +1,77 @@
 
 package pl.pykmcitems.plugin;
 
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public final class PowiekszonyEnderChest implements Listener {
 
-    private static final int ROZMIAR = 54;
-
     private final JavaPlugin plugin;
-    private final File file;
-    private final YamlConfiguration config;
-
-    private final Map<UUID, Inventory> inventories = new HashMap<>();
+    private final org.bukkit.configuration.file.YamlConfiguration config;
+    private final java.io.File file;
 
     public PowiekszonyEnderChest(JavaPlugin plugin) {
         this.plugin = plugin;
+        this.file = new java.io.File(plugin.getDataFolder(), "enderchesty.yml");
 
         if (!plugin.getDataFolder().exists()) {
             plugin.getDataFolder().mkdirs();
         }
 
-        this.file = new File(plugin.getDataFolder(), "enderchesty.yml");
-        this.config = YamlConfiguration.loadConfiguration(file);
+        this.config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file);
     }
 
-    // ==========================================
-    // WŁASNY HOLDER
-    // ==========================================
-
-    private static final class ChestHolder implements InventoryHolder {
-
-        private Inventory inventory;
-
-        @Override
-        public Inventory getInventory() {
-            return inventory;
-        }
-
-        public void setInventory(Inventory inventory) {
-            this.inventory = inventory;
-        }
+    public void open(Player player) {
+        Inventory inventory = getInventory(player);
+        player.openInventory(inventory);
     }
-
-    // ==========================================
-    // POBIERANIE EKWIPUNKU ENDER CHESTA
-    // ==========================================
 
     private Inventory getInventory(Player player) {
-        UUID uuid = player.getUniqueId();
+        String path = player.getUniqueId().toString();
 
-        Inventory inventory = inventories.get(uuid);
-
-        if (inventory != null) {
-            return inventory;
-        }
-
-        ChestHolder holder = new ChestHolder();
-
-        inventory = Bukkit.createInventory(
-                holder,
-                ROZMIAR,
-                Component.text("Ender Chest")
+        Inventory inventory = Bukkit.createInventory(
+                new ChestHolder(player.getUniqueId()),
+                54,
+                "§8Powiększony Ender Chest"
         );
 
-        holder.setInventory(inventory);
+        if (config.contains(path)) {
+            for (int slot = 0; slot < 54; slot++) {
+                ItemStack item = config.getItemStack(path + "." + slot);
 
-        String path = uuid.toString();
-
-        for (int slot = 0; slot < ROZMIAR; slot++) {
-            ItemStack item = config.getItemStack(path + "." + slot);
-
-            if (item != null && !item.getType().isAir()) {
-                inventory.setItem(slot, item);
+                if (item != null && !item.getType().isAir()) {
+                    inventory.setItem(slot, item);
+                }
             }
         }
-
-        inventories.put(uuid, inventory);
 
         return inventory;
     }
 
-    // ==========================================
-    // OTWIERANIE ENDER CHESTA
-    // ==========================================
-
-    public void open(Player player) {
-        player.openInventory(getInventory(player));
-    }
-
-    // ==========================================
-    // OTWIERANIE PO KLIKNIĘCIU BLOKU
-    // ==========================================
-
     @EventHandler
     public void onEnderChestClick(PlayerInteractEvent event) {
-        if (event.getHand() == null
-                || event.getHand().name().equals("OFF_HAND")) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
 
-        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+        if (event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) {
             return;
         }
 
@@ -133,91 +84,68 @@ public final class PowiekszonyEnderChest implements Listener {
         open(event.getPlayer());
     }
 
-    // ==========================================
-    // ZAPIS PO ZAMKNIĘCIU
-    // ==========================================
-
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getPlayer() instanceof Player player)) {
+        if (!(event.getInventory().getHolder() instanceof ChestHolder holder)) {
             return;
         }
 
-        Inventory inventory = event.getInventory();
-
-        if (!(inventory.getHolder(false) instanceof ChestHolder)) {
-            return;
-        }
-
-        savePlayer(player.getUniqueId(), inventory);
+        saveInventory(holder.getOwner(), event.getInventory());
     }
-
-    // ==========================================
-    // ZAPIS PO WYJŚCIU GRACZA
-    // ==========================================
 
     @EventHandler
-    public void onQuit(PlayerQuitEvent event) {
+    public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
 
-        Inventory inventory = inventories.get(player.getUniqueId());
+        Inventory top = player.getOpenInventory().getTopInventory();
 
-        if (inventory != null) {
-            savePlayer(player.getUniqueId(), inventory);
+        if (top.getHolder() instanceof ChestHolder holder) {
+            saveInventory(holder.getOwner(), top);
         }
     }
 
-    // ==========================================
-    // DODAWANIE PRZEDMIOTÓW
-    // ZWRACA PRZEDMIOTY, KTÓRE SIĘ NIE ZMIEŚCIŁY
-    // ==========================================
-
-    public Map<Integer, ItemStack> addItems(
-            Player player,
-            Collection<ItemStack> items
-    ) {
+    public List<ItemStack> addItems(Player player, Collection<ItemStack> items) {
         Inventory inventory = getInventory(player);
-
-        Map<Integer, ItemStack> leftovers = new HashMap<>();
+        List<ItemStack> leftovers = new ArrayList<>();
 
         for (ItemStack item : items) {
             if (item == null || item.getType().isAir()) {
                 continue;
             }
 
-            Map<Integer, ItemStack> result =
-                    inventory.addItem(item.clone());
+            Map<Integer, ItemStack> result = inventory.addItem(item.clone());
 
-            leftovers.putAll(result);
+            for (ItemStack leftover : result.values()) {
+                leftovers.add(leftover.clone());
+            }
         }
 
-        savePlayer(player.getUniqueId(), inventory);
-
+        saveInventory(player.getUniqueId(), inventory);
         return leftovers;
     }
 
-    // ==========================================
-    // CZYSZCZENIE ENDER CHESTA
-    // ==========================================
-
     public void clear(Player player) {
         Inventory inventory = getInventory(player);
-
         inventory.clear();
-
-        savePlayer(player.getUniqueId(), inventory);
+        saveInventory(player.getUniqueId(), inventory);
     }
 
-    // ==========================================
-    // ZAPIS GRACZA
-    // ==========================================
+    public void saveAll() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            Inventory top = player.getOpenInventory().getTopInventory();
 
-    private void savePlayer(UUID uuid, Inventory inventory) {
+            if (top.getHolder() instanceof ChestHolder holder) {
+                saveInventory(holder.getOwner(), top);
+            }
+        }
+    }
+
+    private void saveInventory(UUID uuid, Inventory inventory) {
         String path = uuid.toString();
 
         config.set(path, null);
 
-        for (int slot = 0; slot < ROZMIAR; slot++) {
+        for (int slot = 0; slot < 54; slot++) {
             ItemStack item = inventory.getItem(slot);
 
             if (item != null && !item.getType().isAir()) {
@@ -225,31 +153,33 @@ public final class PowiekszonyEnderChest implements Listener {
             }
         }
 
-        saveFile();
+        saveConfig();
     }
 
-    // ==========================================
-    // ZAPIS PLIKU
-    // ==========================================
-
-    private void saveFile() {
+    private void saveConfig() {
         try {
             config.save(file);
-        } catch (IOException exception) {
-            plugin.getLogger().severe(
-                    "Nie udało się zapisać Ender Chestów: "
-                            + exception.getMessage()
-            );
+        } catch (java.io.IOException exception) {
+            plugin.getLogger().severe("Nie udało się zapisać Ender Chestów!");
+            exception.printStackTrace();
         }
     }
 
-    // ==========================================
-    // ZAPIS PRZY WYŁĄCZANIU SERWERA
-    // ==========================================
+    private static final class ChestHolder implements InventoryHolder {
 
-    public void saveAll() {
-        for (Map.Entry<UUID, Inventory> entry : inventories.entrySet()) {
-            savePlayer(entry.getKey(), entry.getValue());
+        private final UUID owner;
+
+        private ChestHolder(UUID owner) {
+            this.owner = owner;
+        }
+
+        public UUID getOwner() {
+            return owner;
+        }
+
+        @Override
+        public Inventory getInventory() {
+            return null;
         }
     }
 }
