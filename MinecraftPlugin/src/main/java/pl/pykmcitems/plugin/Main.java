@@ -78,6 +78,11 @@ public class Main extends JavaPlugin {
 
         talizmanyManager.updateAllIcons();
 
+        TalizmanBonusy talizmanBonusy =
+        new TalizmanBonusy(this, talizmanyManager);
+
+        getServer().getPluginManager().registerEvents(talizmanBonusy, this);
+
         getLogger().info("PykMCItems zostal wlaczony!");
     }
 
