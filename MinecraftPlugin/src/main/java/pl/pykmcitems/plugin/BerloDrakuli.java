@@ -7,7 +7,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.Material;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -25,7 +24,6 @@ public class BerloDrakuli implements Listener {
 
     private final Map<UUID, Double> originalScales = new HashMap<>();
     private final Map<UUID, BukkitTask> activeTasks = new HashMap<>();
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
 
     public BerloDrakuli(Main plugin) {
         this.plugin = plugin;
@@ -80,17 +78,15 @@ public class BerloDrakuli implements Listener {
             return;
         }
 
-        UUID uuid = player.getUniqueId();
+        ItemCooldownManager cooldownManager = plugin.getItemCooldownManager();
 
-        if (cooldowns.containsKey(uuid)) {
-            long remaining = cooldowns.get(uuid) - System.currentTimeMillis();
+        if (cooldownManager.isOnCooldown(player, "berlo")) {
+            long remaining = cooldownManager.getRemainingCooldown(player, "berlo");
+            long seconds = (remaining + 999) / 1000;
 
-            if (remaining > 0) {
-                player.sendMessage("§cBerło Drakuli jest jeszcze na cooldownie!");
-                return;
-            }
-
-            cooldowns.remove(uuid);
+            player.sendMessage("§cBerło Drakuli jest jeszcze na cooldownie! Pozostało: §e"
+                    + seconds + "s");
+            return;
         }
 
         AttributeInstance scale = player.getAttribute(Attribute.SCALE);
@@ -100,13 +96,21 @@ public class BerloDrakuli implements Listener {
             return;
         }
 
-        originalScales.put(uuid, scale.getBaseValue());
+        if (!cooldownManager.tryStartCooldown(
+                player,
+                "berlo",
+                "&x&E&A&0&0&0&0Berło Drakuli",
+                120_000L
+        )) {
+            return;
+        }
+
+        originalScales.put(player.getUniqueId(), scale.getBaseValue());
         scale.setBaseValue(0.5);
 
-        cooldowns.put(uuid, System.currentTimeMillis() + 120_000);
-        ((Main) plugin).getCooldownScoreboard().startCooldown(player, "berlo", "&x&E&A&0&0&0&0Berło Drakuli", 120_000L);
-
         player.sendMessage("§x§E§A§0§0§0§0Berło Drakuli §7zmniejszyło Twoją postać!");
+
+        UUID uuid = player.getUniqueId();
 
         BukkitTask task = plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             resetPlayer(player);
@@ -133,21 +137,18 @@ public class BerloDrakuli implements Listener {
         }
     }
 
-    private void resetEverything(Player player) {
-        UUID uuid = player.getUniqueId();
-
+    private void resetEffect(Player player) {
         resetPlayer(player);
-        cooldowns.remove(uuid);
     }
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
-        resetEverything(event.getEntity());
+        resetEffect(event.getEntity());
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        resetEverything(event.getPlayer());
+        resetEffect(event.getPlayer());
     }
 
     public void cleanup() {
@@ -165,6 +166,5 @@ public class BerloDrakuli implements Listener {
 
         activeTasks.clear();
         originalScales.clear();
-        cooldowns.clear();
     }
 }
