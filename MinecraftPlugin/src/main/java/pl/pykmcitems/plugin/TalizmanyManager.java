@@ -2,6 +2,7 @@
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
@@ -66,7 +67,7 @@ public final class TalizmanyManager implements Listener {
                 ignored -> new ArrayList<>()
         );
 
-        if (list.size() >= MAX_TALIZMANOW) {
+        if (list.size() >= MAX_TALIZANOW) {
             player.sendMessage("§cMożesz mieć maksymalnie 3 talizmany!");
             return false;
         }
@@ -152,19 +153,15 @@ public final class TalizmanyManager implements Listener {
             return false;
         }
 
-        // Pobieramy talizman przed usunięciem z listy.
         ItemStack item = list.remove(slot).clone();
 
-        // Usuwamy pustą listę gracza.
         if (list.isEmpty()) {
             equipped.remove(player.getUniqueId());
         }
 
-        // Zwracamy talizman do ekwipunku.
         Map<Integer, ItemStack> leftovers =
                 player.getInventory().addItem(item);
 
-        // Jeśli ekwipunek jest pełny, wyrzucamy talizman obok gracza.
         for (ItemStack leftover : leftovers.values()) {
             player.getWorld().dropItemNaturally(
                     player.getLocation(),
@@ -172,7 +169,6 @@ public final class TalizmanyManager implements Listener {
             );
         }
 
-        // Zapisujemy zmiany i aktualizujemy ikony.
         save();
         updateAllIcons();
 
@@ -250,19 +246,35 @@ public final class TalizmanyManager implements Listener {
     }
 
     // ==========================================
-    // IKONY NAD GŁOWĄ
+    // KOLOROWE IKONY NAD GŁOWĄ
     // ==========================================
 
-    private String getIcon(String id) {
-        if (id == null) return "";
+    private Component getIcon(String id) {
+        if (id == null) {
+            return Component.empty();
+        }
 
-        if (id.startsWith("odpornosc_")) return "&b🛡";
-        if (id.startsWith("sila_")) return "&d⚔";
-        if (id.equals("slodkosci_3")) return "&b🍬";
-        if (id.equals("drop")) return "&b✉";
-        if (id.equals("swiateczny_czas")) return "&f❄";
+        if (id.startsWith("odpornosc_")) {
+            return Component.text("🛡", NamedTextColor.AQUA);
+        }
 
-        return "";
+        if (id.startsWith("sila_")) {
+            return Component.text("⚔", NamedTextColor.LIGHT_PURPLE);
+        }
+
+        if (id.equals("slodkosci_3")) {
+            return Component.text("🍬", NamedTextColor.AQUA);
+        }
+
+        if (id.equals("drop")) {
+            return Component.text("✉", NamedTextColor.AQUA);
+        }
+
+        if (id.equals("swiateczny_czas")) {
+            return Component.text("❄", NamedTextColor.WHITE);
+        }
+
+        return Component.empty();
     }
 
     private String getTeamName(Player target) {
@@ -277,21 +289,26 @@ public final class TalizmanyManager implements Listener {
 
             Team team = board.getTeam(teamName);
 
-            StringBuilder icons = new StringBuilder();
+            Component icons = Component.empty();
+            boolean first = true;
 
             for (ItemStack item : getEquipped(target)) {
-                String icon = getIcon(getId(item));
+                String id = getId(item);
+                Component icon = getIcon(id);
 
-                if (!icon.isEmpty()) {
-                    if (icons.length() > 0) {
-                        icons.append(" ");
-                    }
-
-                    icons.append(icon);
+                if (icon.equals(Component.empty())) {
+                    continue;
                 }
+
+                if (!first) {
+                    icons = icons.append(Component.text(" "));
+                }
+
+                icons = icons.append(icon);
+                first = false;
             }
 
-            if (icons.length() == 0) {
+            if (first) {
                 if (team != null) {
                     team.removeEntry(target.getName());
                     team.unregister();
@@ -308,7 +325,7 @@ public final class TalizmanyManager implements Listener {
                 team.addEntry(target.getName());
             }
 
-            team.prefix(Component.text(icons + " "));
+            team.prefix(icons.append(Component.text(" ")));
         }
     }
 
