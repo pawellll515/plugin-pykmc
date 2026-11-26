@@ -221,18 +221,8 @@ public class TalizmanyGUI implements Listener {
             case LIST -> {
                 if (slot == 53) {
                     openMain(player);
-                    return;
                 }
-
-                ItemStack item = event.getCurrentItem();
-
-                if (item == null || item.getType() == Material.AIR) {
-                    return;
-                }
-
-                if (manager.equip(player, item)) {
-                    openOwn(player);
-                }
+                // Klikanie talizmanów na liście nie wykonuje żadnej akcji.
             }
 
             case OWN -> {
