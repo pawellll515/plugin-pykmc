@@ -47,6 +47,7 @@ public class Main extends JavaPlugin {
         klataMeduzy = new KlataMeduzy(this);
         getServer().getPluginManager().registerEvents(klataMeduzy, this);
 
+        // GUI TALIZMANÓW
         talizmanyGUI = new TalizmanyGUI();
         getServer().getPluginManager().registerEvents(talizmanyGUI, this);
 
@@ -106,7 +107,7 @@ public class Main extends JavaPlugin {
         if (command.getName().equalsIgnoreCase("talizmany")) {
             talizmanyGUI.openMain(player);
             return true;
-        }    
+        }
 
         if (command.getName().equalsIgnoreCase("ustawglowke")) {
             if (!player.hasPermission("pykmcitems.ustawglowke")) {
