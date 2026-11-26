@@ -31,28 +31,22 @@ import java.util.UUID;
 
 public class LukWiedzmy implements Listener {
 
-    private final JavaPlugin plugin;
+    private final Main plugin;
     private final NamespacedKey itemKey;
 
     private final Map<UUID, UUID> naszeStrzaly = new HashMap<>();
-
     private final Map<UUID, BukkitTask> zamrozeni = new HashMap<>();
-    private final Map<UUID, Long> cooldowny = new HashMap<>();
 
     private static final long COOLDOWN = 60_000L;
 
-    // Tak samo jak w Obsikanej Śnieżce: 50 ticków = 2,5 sekundy.
     private static final int CZAS_ZAMROZENIA = 50;
-
-    // Oślepienie: 2 sekundy.
     private static final int CZAS_OSLEPIENIA = 40;
 
     public LukWiedzmy(JavaPlugin plugin) {
-        this.plugin = plugin;
+        this.plugin = (Main) plugin;
         this.itemKey = new NamespacedKey(plugin, "luk_wiedzmy");
     }
 
-    // Tworzenie przedmiotu
     public ItemStack createItem() {
 
         ItemStack item = new ItemStack(Material.BOW);
@@ -84,7 +78,6 @@ public class LukWiedzmy implements Listener {
                         .decoration(TextDecoration.ITALIC, false)
         ));
 
-        // CustomModelData 2
         meta.setCustomModelData(2);
 
         meta.getPersistentDataContainer().set(
@@ -98,7 +91,6 @@ public class LukWiedzmy implements Listener {
         return item;
     }
 
-    // Sprawdzanie, czy to Łuk Wiedźmy
     private boolean isLukWiedzmy(ItemStack item) {
 
         if (item == null || item.getType() != Material.BOW
@@ -110,7 +102,6 @@ public class LukWiedzmy implements Listener {
                 .has(itemKey, PersistentDataType.BYTE);
     }
 
-    // Strzelanie z łuku
     @EventHandler
     public void onShoot(EntityShootBowEvent event) {
 
@@ -122,49 +113,45 @@ public class LukWiedzmy implements Listener {
             return;
         }
 
-        long teraz = System.currentTimeMillis();
+        ItemCooldownManager cooldownManager =
+                plugin.getItemCooldownManager();
 
-        long koniec = cooldowny.getOrDefault(
-                player.getUniqueId(), 0L
-        );
+        if (cooldownManager.isOnCooldown(player, "luk_wiedzmy")) {
 
-        // Sprawdzanie cooldownu
-        if (teraz < koniec) {
+            long remaining = cooldownManager.getRemainingCooldown(
+                    player,
+                    "luk_wiedzmy"
+            );
 
-            long pozostalo = (koniec - teraz + 999) / 1000;
+            long seconds = (remaining + 999) / 1000;
 
             player.sendMessage(
                     "§cŁuk Wiedźmy jest na cooldownie! Pozostało: §e"
-                            + pozostalo + "s"
+                            + seconds + "s"
             );
 
             event.setCancelled(true);
             return;
         }
 
-        // Zapamiętanie strzały
+        if (!cooldownManager.tryStartCooldown(
+                player,
+                "luk_wiedzmy",
+                "&dŁuk Wiedźmy",
+                COOLDOWN
+        )) {
+            event.setCancelled(true);
+            return;
+        }
+
         if (event.getProjectile() instanceof Arrow arrow) {
             naszeStrzaly.put(
                     arrow.getUniqueId(),
                     player.getUniqueId()
             );
         }
-
-        // Cooldown 60 sekund
-        cooldowny.put(
-                player.getUniqueId(),
-                teraz + COOLDOWN
-        );
-
-        ((Main) plugin).getCooldownScoreboard().startCooldown(
-                player,
-                "luk_wiedzmy",
-                "&dŁuk Wiedźmy",
-                COOLDOWN
-        );
     }
 
-    // Wykrywanie trafienia strzałą
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
 
@@ -184,12 +171,10 @@ public class LukWiedzmy implements Listener {
             return;
         }
 
-        // Nie trafiamy samego siebie
         if (shooterUUID.equals(target.getUniqueId())) {
             return;
         }
 
-        // Oślepienie na 2 sekundy
         target.addPotionEffect(
                 new PotionEffect(
                         PotionEffectType.BLINDNESS,
@@ -200,16 +185,13 @@ public class LukWiedzmy implements Listener {
                 )
         );
 
-        // Zamrożenie
         zamroz(target);
     }
 
-    // Zamrażanie gracza
     private void zamroz(Player target) {
 
         UUID uuid = target.getUniqueId();
 
-        // Usuwanie poprzedniego efektu
         BukkitTask previous = zamrozeni.remove(uuid);
 
         if (previous != null) {
@@ -237,13 +219,11 @@ public class LukWiedzmy implements Listener {
                             return;
                         }
 
-                        // Zatrzymanie ruchu
                         target.setVelocity(new Vector(0, 0, 0));
                         target.setFallDistance(0);
 
                         tick++;
 
-                        // 50 ticków = 2.5 sekundy
                         if (tick >= CZAS_ZAMROZENIA) {
                             zakoncz(target, true);
                         }
@@ -256,7 +236,6 @@ public class LukWiedzmy implements Listener {
         zamrozeni.put(uuid, task);
     }
 
-    // Blokowanie poruszania się
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
 
@@ -270,7 +249,6 @@ public class LukWiedzmy implements Listener {
             return;
         }
 
-        // Blokujemy zmianę pozycji, ale pozwalamy obracać kamerą
         if (event.getFrom().getX() != event.getTo().getX()
                 || event.getFrom().getY() != event.getTo().getY()
                 || event.getFrom().getZ() != event.getTo().getZ()) {
@@ -279,7 +257,6 @@ public class LukWiedzmy implements Listener {
         }
     }
 
-    // Zakończenie zamrożenia
     private void zakoncz(Player target, boolean notify) {
 
         UUID uuid = target.getUniqueId();
@@ -297,7 +274,6 @@ public class LukWiedzmy implements Listener {
         }
     }
 
-    // Wyjście z serwera
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
 
@@ -306,14 +282,11 @@ public class LukWiedzmy implements Listener {
 
         zakoncz(player, false);
 
-        cooldowny.remove(uuid);
-
         naszeStrzaly.values().removeIf(
                 shooter -> shooter.equals(uuid)
         );
     }
 
-    // Śmierć gracza
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
 
@@ -321,14 +294,11 @@ public class LukWiedzmy implements Listener {
 
         zakoncz(player, false);
 
-        cooldowny.remove(player.getUniqueId());
-
         naszeStrzaly.values().removeIf(
                 shooter -> shooter.equals(player.getUniqueId())
         );
     }
 
-    // Czyszczenie przy wyłączeniu pluginu
     public void cleanup() {
 
         for (BukkitTask task : zamrozeni.values()) {
@@ -336,7 +306,6 @@ public class LukWiedzmy implements Listener {
         }
 
         zamrozeni.clear();
-        cooldowny.clear();
         naszeStrzaly.clear();
     }
 }
