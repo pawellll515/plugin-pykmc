@@ -8,9 +8,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public final class TalizmanySmierc implements Listener {
 
@@ -27,18 +25,12 @@ public final class TalizmanySmierc implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-
         Player ofiara = event.getEntity();
         Player zabojca = ofiara.getKiller();
 
-        // ==========================================
-        // TALIZMAN DROP ZABÓJCY
-        // ==========================================
-
-        if (zabojca != null
-                && talizmanyManager.has(zabojca, "drop")) {
-
-            Collection<ItemStack> przedmioty = new ArrayList<>();
+        // Talizman Drop przenosi łupy do Ender Chesta zabójcy.
+        if (zabojca != null && talizmanyManager.has(zabojca, "drop")) {
+            List<ItemStack> przedmioty = new ArrayList<>();
 
             for (ItemStack item : event.getDrops()) {
                 if (item != null && !item.getType().isAir()) {
@@ -46,50 +38,18 @@ public final class TalizmanySmierc implements Listener {
                 }
             }
 
-            Map<Integer, ItemStack> pozostale =
+            List<ItemStack> pozostale =
                     enderChest.addItems(zabojca, przedmioty);
 
-            // Usuwamy z listy śmierci tylko przedmioty,
-            // które faktycznie zmieściły się w Ender Cheście.
-            List<ItemStack> doUsuniecia = new ArrayList<>();
-
-            for (ItemStack oryginal : event.getDrops()) {
-                if (oryginal == null || oryginal.getType().isAir()) {
-                    continue;
-                }
-
-                int pozostalaIlosc = 0;
-
-                for (ItemStack item : pozostale.values()) {
-                    if (item.isSimilar(oryginal)) {
-                        pozostalaIlosc += item.getAmount();
-                    }
-                }
-
-                int przeniesionaIlosc =
-                        oryginal.getAmount() - pozostalaIlosc;
-
-                if (przeniesionaIlosc >= oryginal.getAmount()) {
-                    doUsuniecia.add(oryginal);
-                } else if (przeniesionaIlosc > 0) {
-                    oryginal.setAmount(
-                            oryginal.getAmount() - przeniesionaIlosc
-                    );
-                }
-            }
-
-            event.getDrops().removeAll(doUsuniecia);
+            event.getDrops().clear();
+            event.getDrops().addAll(pozostale);
 
             zabojca.sendMessage(
-                    "§a✦ §7Łupy gracza §e" + ofiara.getName()
-                            + " §7zostały przeniesione do twojego Ender Chesta!"
+                    "§aTalizman Drop przeniósł łupy do twojego Ender Chesta!"
             );
         }
 
-        // ==========================================
-        // WYPADANIE TALIZMANÓW OFIARY
-        // ==========================================
-
+        // Talizmany założone przez ofiarę wypadają po śmierci.
         List<ItemStack> zalozone =
                 talizmanyManager.getEquipped(ofiara);
 
