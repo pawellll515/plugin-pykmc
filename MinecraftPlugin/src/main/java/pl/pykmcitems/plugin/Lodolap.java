@@ -1,3 +1,4 @@
+
 package pl.pykmcitems.plugin;
 
 import org.bukkit.Material;
@@ -25,15 +26,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Lodolap implements Listener {
 
     private final JavaPlugin plugin;
+    private final ItemCooldownManager cooldownManager;
 
     private final NamespacedKey itemKey;
     private final NamespacedKey projectileKey;
 
-    private final Map<UUID, Long> cooldowns = new ConcurrentHashMap<>();
     private final Map<UUID, Long> elytraBlocks = new ConcurrentHashMap<>();
 
     public Lodolap(JavaPlugin plugin) {
         this.plugin = plugin;
+        this.cooldownManager = ((Main) plugin).getItemCooldownManager();
 
         itemKey = new NamespacedKey(plugin, "lodolap_item");
         projectileKey = new NamespacedKey(plugin, "lodolap_projectile");
@@ -50,29 +52,6 @@ public class Lodolap implements Listener {
 
         return item.getItemMeta().getPersistentDataContainer()
                 .has(itemKey, PersistentDataType.BYTE);
-    }
-
-    private boolean hasCooldown(Player player) {
-        Long koniec = cooldowns.get(player.getUniqueId());
-
-        if (koniec == null) {
-            return false;
-        }
-
-        if (System.currentTimeMillis() >= koniec) {
-            cooldowns.remove(player.getUniqueId());
-            return false;
-        }
-
-        return true;
-    }
-
-    private void ustawCooldown(Player player, int sekundy) {
-        cooldowns.put(
-                player.getUniqueId(),
-                System.currentTimeMillis() + sekundy * 1000L
-        );
-        ((Main) plugin).getCooldownScoreboard().startCooldown(player, "lodolap", "&b&lLodołap", sekundy * 1000L);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -95,12 +74,14 @@ public class Lodolap implements Listener {
 
         event.setCancelled(true);
 
-        if (hasCooldown(player)) {
+        if (!cooldownManager.tryStartCooldown(
+                player,
+                "lodolap",
+                "&b&lLodołap",
+                3_000L
+        )) {
             return;
         }
-
-        // Vanilla cooldown 3 sekundy
-        ustawCooldown(player, 3);
 
         // Tworzymy pocisk ręcznie, bez zużywania przedmiotu
         Snowball snowball = player.getWorld().spawn(
@@ -144,8 +125,13 @@ public class Lodolap implements Listener {
             return;
         }
 
-        // Vanilla cooldown 60 sekund po trafieniu
-        ustawCooldown(shooter, 60);
+        // Nadpisujemy cooldown na 60 sekund po trafieniu
+        cooldownManager.setCooldown(
+                shooter,
+                "lodolap",
+                "&b&lLodołap",
+                60_000L
+        );
 
         UUID targetUUID = target.getUniqueId();
 
@@ -212,17 +198,11 @@ public class Lodolap implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        UUID uuid = event.getPlayer().getUniqueId();
-
-        cooldowns.remove(uuid);
-        elytraBlocks.remove(uuid);
+        elytraBlocks.remove(event.getPlayer().getUniqueId());
     }
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
-        UUID uuid = event.getEntity().getUniqueId();
-
-        cooldowns.remove(uuid);
-        elytraBlocks.remove(uuid);
+        elytraBlocks.remove(event.getEntity().getUniqueId());
     }
 }
