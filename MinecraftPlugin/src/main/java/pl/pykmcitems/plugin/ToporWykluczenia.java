@@ -13,7 +13,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -35,13 +34,14 @@ public class ToporWykluczenia implements Listener {
 
     private final JavaPlugin plugin;
     private final NamespacedKey toporKey;
+    private final ItemCooldownManager cooldownManager;
 
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
     private final Map<UUID, Long> blokady = new HashMap<>();
 
     public ToporWykluczenia(JavaPlugin plugin) {
         this.plugin = plugin;
         this.toporKey = new NamespacedKey(plugin, "topor_wykluczenia");
+        this.cooldownManager = ((Main) plugin).getItemCooldownManager();
     }
 
     private boolean isTopor(ItemStack item) {
@@ -108,7 +108,7 @@ public class ToporWykluczenia implements Listener {
         ));
     }
 
-    // UDERZENIE TOPorem
+    // UDERZENIE TOPOREM
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onDamage(EntityDamageByEntityEvent event) {
@@ -127,12 +127,13 @@ public class ToporWykluczenia implements Listener {
             return;
         }
 
-        UUID uuid = attacker.getUniqueId();
-        long now = System.currentTimeMillis();
-
-        Long cooldownEnd = cooldowns.get(uuid);
-
-        if (cooldownEnd != null && cooldownEnd > now) {
+        // Sprawdzanie cooldownu
+        if (!cooldownManager.tryStartCooldown(
+                attacker,
+                "topor",
+                "&6&lTopór Wykluczenia",
+                120_000L
+        )) {
             attacker.sendActionBar(Component.text(
                     "Topór jest na cooldownie!",
                     NamedTextColor.RED
@@ -140,10 +141,9 @@ public class ToporWykluczenia implements Listener {
             return;
         }
 
-        cooldowns.put(uuid, now + 120_000L);
-        ((Main) plugin).getCooldownScoreboard().startCooldown(attacker, "topor", "&6&lTopór Wykluczenia", 120_000L);
-
-        blokady.put(victim.getUniqueId(), now + 8_000L);
+        // Blokada ekwipunku na 10 sekund
+        blokady.put(victim.getUniqueId(),
+                System.currentTimeMillis() + 10_000L);
 
         victim.sendActionBar(Component.text(
                 "Topór Wykluczenia zablokował Twój ekwipunek!",
@@ -168,7 +168,7 @@ public class ToporWykluczenia implements Listener {
         wyslijBlokade(player);
     }
 
-    // BLOKADA PRZECIAGANIA PRZEDMIOTOW
+    // BLOKADA PRZECIĄGANIA PRZEDMIOTÓW
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onInventoryDrag(InventoryDragEvent event) {
@@ -215,7 +215,7 @@ public class ToporWykluczenia implements Listener {
         }
     }
 
-    // BLOKADA ZMIANY RAKI
+    // BLOKADA ZMIANY RĄK
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onSwap(PlayerSwapHandItemsEvent event) {
@@ -233,7 +233,7 @@ public class ToporWykluczenia implements Listener {
         ));
     }
 
-    // BLOKADA ZAKLADANIA ZBROI NA SIEBIE
+    // BLOKADA ZAKŁADANIA ZBROI NA SIEBIE
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onRightClick(PlayerInteractEvent event) {
@@ -265,7 +265,7 @@ public class ToporWykluczenia implements Listener {
         }
     }
 
-    // BLOKADA ZAKLADANIA ZBROI NA INNYCH GRACZY
+    // BLOKADA ZAKŁADANIA ZBROI NA INNYCH GRACZY
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onRightClickEntity(PlayerInteractEntityEvent event) {
@@ -298,25 +298,10 @@ public class ToporWykluczenia implements Listener {
         }
     }
 
-    // CZYSZCZENIE PO WYJSCIU
+    // CZYSZCZENIE PO WYJŚCIU
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-
-        UUID uuid = event.getPlayer().getUniqueId();
-
-        cooldowns.remove(uuid);
-        blokady.remove(uuid);
-    }
-
-    // CZYSZCZENIE PO SMIERCI
-
-    @EventHandler
-    public void onDeath(PlayerDeathEvent event) {
-
-        UUID uuid = event.getEntity().getUniqueId();
-
-        cooldowns.remove(uuid);
-        blokady.remove(uuid);
+        blokady.remove(event.getPlayer().getUniqueId());
     }
 }
