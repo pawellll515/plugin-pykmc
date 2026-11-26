@@ -833,7 +833,7 @@ public class Itemy {
                 0.0,
                 "&e| +1s &7czasu trwania regeneracji ze złotych jabłek.",
                 "",
-                "» &fZwiększa obrażenia krytyczne."
+                "&7» &fZwiększa obrażenia krytyczne."
         );
     }
 
@@ -844,8 +844,8 @@ public class Itemy {
                 "&b✉ Talizman dropu",
                 0.0,
                 "&7» Po &czabiciu &7gracza jego przedmioty",
-                "» &7trafiają do wolnego miejsca",
-                "» &7w Twoim &denderchescie."
+                "&7» &7trafiają do wolnego miejsca",
+                "&7» &7w Twoim &denderchescie."
         );
     }
 
