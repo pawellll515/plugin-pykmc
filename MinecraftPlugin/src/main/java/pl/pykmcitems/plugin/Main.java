@@ -19,6 +19,7 @@ public class Main extends JavaPlugin {
     private CooldownScoreboard cooldownScoreboard;
     private ItemCooldownManager itemCooldownManager;
     private TalizmanyGUI talizmanyGUI;
+    private TalizmanyManager talizmanyManager;
 
     @Override
     public void onEnable() {
@@ -63,11 +64,12 @@ public class Main extends JavaPlugin {
         klataMeduzy = new KlataMeduzy(this);
         getServer().getPluginManager().registerEvents(klataMeduzy, this);
 
-        // GUI TALIZMANÓW
-        talizmanyGUI = new TalizmanyGUI();
-        getServer().getPluginManager().registerEvents(talizmanyGUI, this);
+        // SYSTEM TALIZMANÓW
+        talizmanyManager = new TalizmanyManager(this);
 
-        getLogger().info("PykMCItems zostal wlaczony!");
+        talizmanyGUI = new TalizmanyGUI(this, talizmanyManager);
+
+        getServer().getPluginManager().registerEvents(talizmanyGUI, this);
     }
 
     @Override
@@ -99,6 +101,10 @@ public class Main extends JavaPlugin {
 
         if (cooldownScoreboard != null) {
             cooldownScoreboard.shutdown();
+        }
+
+        if (talizmanyManager != null) {
+            talizmanyManager.save();
         }
 
         getLogger().info("PykMCItems zostal wylaczony!");
