@@ -4,8 +4,14 @@ package pl.pykmcitems.plugin;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,7 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public final class TalizmanyManager {
+public final class TalizmanyManager implements Listener {
 
     private static final int MAX_TALIZMANOW = 3;
 
@@ -30,6 +36,7 @@ public final class TalizmanyManager {
 
     public TalizmanyManager(JavaPlugin plugin) {
         this.plugin = plugin;
+
         this.idKey = new NamespacedKey(plugin, "talizman_id");
         this.valueKey = new NamespacedKey(plugin, "talizman_wartosc");
 
@@ -44,10 +51,15 @@ public final class TalizmanyManager {
     // ==========================================
 
     public boolean equip(Player player, ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return false;
+        if (item == null || !item.hasItemMeta()) {
+            return false;
+        }
 
         String id = getId(item);
-        if (id == null) return false;
+
+        if (id == null) {
+            return false;
+        }
 
         List<ItemStack> list = equipped.computeIfAbsent(
                 player.getUniqueId(),
@@ -64,8 +76,8 @@ public final class TalizmanyManager {
         for (ItemStack current : list) {
             String currentId = getId(current);
 
-            if (currentId != null &&
-                    getFamily(currentId).equals(family)) {
+            if (currentId != null
+                    && getFamily(currentId).equals(family)) {
                 player.sendMessage(
                         "§cMasz już założony talizman z tej rodziny!"
                 );
@@ -80,6 +92,59 @@ public final class TalizmanyManager {
 
         player.sendMessage("§aZałożono talizman!");
         return true;
+    }
+
+    // ==========================================
+    // ZAKŁADANIE TALIZMANU LPM W RĘCE
+    // ==========================================
+
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+
+        // Obsługujemy wyłącznie główną rękę.
+        if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+
+        // Tylko lewy przycisk myszy.
+        if (event.getAction() != Action.LEFT_CLICK_AIR
+                && event.getAction() != Action.LEFT_CLICK_BLOCK) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+
+        ItemStack item = player.getInventory().getItemInMainHand();
+
+        // Sprawdzamy, czy trzymany przedmiot jest talizmanem.
+        String id = getId(item);
+
+        if (id == null) {
+            return;
+        }
+
+        // Jeśli nie uda się założyć, przedmiot zostaje w ręce.
+        if (!equip(player, item)) {
+            return;
+        }
+
+        // Zabieramy jedną sztukę z ręki.
+        if (item.getAmount() <= 1) {
+            player.getInventory().setItemInMainHand(null);
+        } else {
+            item.setAmount(item.getAmount() - 1);
+        }
+
+        // Dźwięk założenia talizmanu.
+        player.playSound(
+                player.getLocation(),
+                Sound.BLOCK_VAULT_ACTIVATE,
+                1.0f,
+                1.0f
+        );
+
+        // Nie niszczymy bloku przy zakładaniu talizmanu.
+        event.setCancelled(true);
     }
 
     // ==========================================
@@ -198,8 +263,7 @@ public final class TalizmanyManager {
             StringBuilder icons = new StringBuilder();
 
             for (ItemStack item : getEquipped(target)) {
-                String id = getId(item);
-                String icon = getIcon(id);
+                String icon = getIcon(getId(item));
 
                 if (!icon.isEmpty()) {
                     if (icons.length() > 0) {
@@ -215,6 +279,7 @@ public final class TalizmanyManager {
                     team.removeEntry(target.getName());
                     team.unregister();
                 }
+
                 continue;
             }
 
