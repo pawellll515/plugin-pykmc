@@ -95,6 +95,13 @@ public class Main extends JavaPlugin {
                 powiekszonyEnderChest,
                 this
         );
+        TalizmanySmierc talizmanySmierc =
+        new TalizmanySmierc(talizmanyManager, powiekszonyEnderChest);
+
+        getServer().getPluginManager().registerEvents(
+        talizmanySmierc,
+        this
+        );
 
         getLogger().info("PykMCItems zostal wlaczony!");
     }
