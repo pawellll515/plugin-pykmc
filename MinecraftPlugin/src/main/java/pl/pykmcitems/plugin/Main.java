@@ -87,6 +87,116 @@ public class Main extends JavaPlugin {
         return cooldownScoreboard;
     }
 
+    // ==========================================
+    // TWORZENIE TALIZMANÓW Z KOMENDY
+    // ==========================================
+
+    private ItemStack stworzTalizmanZKomendy(String id, Double wartosc) {
+        return switch (id.toLowerCase()) {
+            case "odpornosc_1" -> Itemy.talizmanOdpornosciI(this);
+            case "odpornosc_2" -> Itemy.talizmanOdpornosciII(this);
+            case "odpornosc_3" -> wartosc == null ? null
+                    : Itemy.talizmanOdpornosciIII(this, wartosc);
+
+            case "sila_1" -> Itemy.talizmanSilyI(this);
+            case "sila_2" -> Itemy.talizmanSilyII(this);
+            case "sila_3" -> wartosc == null ? null
+                    : Itemy.talizmanSilyIII(this, wartosc);
+
+            case "szybkosc_3" -> Itemy.talizmanSzybkosciIII(this);
+            case "drop" -> Itemy.talizmanDropu(this);
+
+            case "swiateczny_czas" -> wartosc == null ? null
+                    : Itemy.talizmanSwiatecznegoCzasu(this, wartosc);
+
+            default -> null;
+        };
+    }
+
+    private boolean czyPoprawnaWartosc(String id, double wartosc) {
+        return switch (id.toLowerCase()) {
+            case "odpornosc_3" -> wartosc >= 10.0 && wartosc <= 15.0;
+            case "sila_3" -> wartosc >= 8.0 && wartosc <= 15.0;
+            case "swiateczny_czas" -> wartosc >= 5.0 && wartosc <= 20.0;
+            default -> false;
+        };
+    }
+
+    private boolean wymagaWartosci(String id) {
+        return id.equalsIgnoreCase("odpornosc_3")
+                || id.equalsIgnoreCase("sila_3")
+                || id.equalsIgnoreCase("swiateczny_czas");
+    }
+
+    private boolean obsluzDajTalizman(CommandSender sender, String[] args) {
+        if (args.length < 2 || args.length > 3) {
+            sender.sendMessage("§cUżycie: /dajtalizman <gracz> <id> [wartosc]");
+            return true;
+        }
+
+        if (sender instanceof Player player
+                && !player.hasPermission("pykmcitems.dajtalizman")) {
+            player.sendMessage("§cNie masz uprawnień do tej komendy!");
+            return true;
+        }
+
+        Player odbiorca = getServer().getPlayerExact(args[0]);
+
+        if (odbiorca == null) {
+            sender.sendMessage("§cTen gracz nie jest online!");
+            return true;
+        }
+
+        String id = args[1].toLowerCase();
+        Double wartosc = null;
+
+        if (wymagaWartosci(id)) {
+            if (args.length != 3) {
+                sender.sendMessage("§cTen talizman wymaga podania wartości procentowej!");
+                return true;
+            }
+
+            try {
+                wartosc = Double.parseDouble(args[2].replace(",", "."));
+            } catch (NumberFormatException exception) {
+                sender.sendMessage("§cPodana wartość nie jest poprawną liczbą!");
+                return true;
+            }
+
+            if (!czyPoprawnaWartosc(id, wartosc)) {
+                sender.sendMessage("§cNieprawidłowa wartość dla tego talizmanu!");
+                return true;
+            }
+        } else if (args.length != 2) {
+            sender.sendMessage("§cTen talizman nie przyjmuje wartości procentowej!");
+            return true;
+        }
+
+        ItemStack talizman = stworzTalizmanZKomendy(id, wartosc);
+
+        if (talizman == null) {
+            sender.sendMessage("§cNieznany identyfikator talizmanu!");
+            sender.sendMessage("§7Dostępne: odpornosc_1, odpornosc_2, odpornosc_3, sila_1, sila_2, sila_3, szybkosc_3, drop, swiateczny_czas");
+            return true;
+        }
+
+        var pozostale = odbiorca.getInventory().addItem(talizman);
+
+        // Jeśli ekwipunek jest pełny, przedmiot zostanie wyrzucony obok gracza.
+        for (ItemStack item : pozostale.values()) {
+            odbiorca.getWorld().dropItemNaturally(odbiorca.getLocation(), item);
+        }
+
+        sender.sendMessage("§aNadano talizman graczowi §e" + odbiorca.getName() + "§a.");
+        odbiorca.sendMessage("§aOtrzymałeś talizman!");
+
+        return true;
+    }
+
+    // ==========================================
+    // KOMENDY
+    // ==========================================
+
     @Override
     public boolean onCommand(
             CommandSender sender,
@@ -94,6 +204,12 @@ public class Main extends JavaPlugin {
             String label,
             String[] args
     ) {
+
+        // Ta komenda działa również z konsoli.
+        if (command.getName().equalsIgnoreCase("dajtalizman")) {
+            return obsluzDajTalizman(sender, args);
+        }
+
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Ta komenda jest dostepna tylko dla graczy!");
             return true;
