@@ -103,7 +103,7 @@ public class Main extends JavaPlugin {
             case "sila_3" -> wartosc == null ? null
                     : Itemy.talizmanSilyIII(this, wartosc);
 
-            case "szybkosc_3" -> Itemy.talizmanSzybkosciIII(this);
+            case "slodkosci_3" -> Itemy.talizmanSlodkosciIII(this);
             case "drop" -> Itemy.talizmanDropu(this);
 
             case "swiateczny_czas" -> wartosc == null ? null
@@ -176,13 +176,12 @@ public class Main extends JavaPlugin {
 
         if (talizman == null) {
             sender.sendMessage("§cNieznany identyfikator talizmanu!");
-            sender.sendMessage("§7Dostępne: odpornosc_1, odpornosc_2, odpornosc_3, sila_1, sila_2, sila_3, szybkosc_3, drop, swiateczny_czas");
+            sender.sendMessage("§7Dostępne: odpornosc_1, odpornosc_2, odpornosc_3, sila_1, sila_2, sila_3, slodkosci_3, drop, swiateczny_czas");
             return true;
         }
 
         var pozostale = odbiorca.getInventory().addItem(talizman);
 
-        // Jeśli ekwipunek jest pełny, przedmiot zostanie wyrzucony obok gracza.
         for (ItemStack item : pozostale.values()) {
             odbiorca.getWorld().dropItemNaturally(odbiorca.getLocation(), item);
         }
@@ -205,7 +204,6 @@ public class Main extends JavaPlugin {
             String[] args
     ) {
 
-        // Ta komenda działa również z konsoli.
         if (command.getName().equalsIgnoreCase("dajtalizman")) {
             return obsluzDajTalizman(sender, args);
         }
