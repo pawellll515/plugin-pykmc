@@ -64,15 +64,17 @@ public class Main extends JavaPlugin {
         // SYSTEM TALIZMANÓW
         talizmanyManager = new TalizmanyManager(this);
 
-        talizmanyGUI = new TalizmanyGUI(this, talizmanyManager);
-
         getServer().getPluginManager().registerEvents(
-                talizmanyGUI,
+                talizmanyManager,
                 this
         );
 
-        getLogger().info("PykMCItems zostal wlaczony!");
-    }
+        talizmanyManager.updateAllIcons();
+
+        talizmanyGUI = new TalizmanyGUI(this, talizmanyManager);
+
+                getLogger().info("PykMCItems zostal wlaczony!");
+            }
 
     @Override
     public void onDisable() {
