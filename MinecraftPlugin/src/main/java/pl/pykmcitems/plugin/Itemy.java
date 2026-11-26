@@ -4,6 +4,7 @@ package pl.pykmcitems.plugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -583,11 +584,7 @@ public class Itemy {
         List<Component> lore = new ArrayList<>();
 
         lore.add(Component.empty());
-
-        lore.add(tekst(
-                "Po użyciu zmniejszasz swoją postać",
-                NamedTextColor.GRAY
-        ));
+        lore.add(tekst("Po użyciu zmniejszasz swoją postać", NamedTextColor.GRAY));
 
         lore.add(Component.text()
                 .append(tekst("o ", NamedTextColor.GRAY))
@@ -643,7 +640,6 @@ public class Itemy {
                 .build());
 
         lore.add(Component.empty());
-
         lore.add(tekst("Przedmiot jest jednorazowy", NamedTextColor.GRAY));
 
         meta.lore(lore);
@@ -671,10 +667,7 @@ public class Itemy {
 
         List<Component> lore = new ArrayList<>();
 
-        lore.add(tekst(
-                "Po trafieniu przeciwnika:",
-                NamedTextColor.GRAY
-        ));
+        lore.add(tekst("Po trafieniu przeciwnika:", NamedTextColor.GRAY));
 
         lore.add(Component.text()
                 .append(tekst("» ", NamedTextColor.GRAY))
@@ -689,16 +682,8 @@ public class Itemy {
                 .build());
 
         lore.add(Component.empty());
-
-        lore.add(tekst(
-                "Cooldown: 60 sekund",
-                NamedTextColor.YELLOW
-        ));
-
-        lore.add(tekst(
-                "Przedmiot pochodzi z eventu Halloween 2024",
-                NamedTextColor.GRAY
-        ));
+        lore.add(tekst("Cooldown: 60 sekund", NamedTextColor.YELLOW));
+        lore.add(tekst("Przedmiot pochodzi z eventu Halloween 2024", NamedTextColor.GRAY));
 
         meta.lore(lore);
         meta.setCustomModelData(2);
@@ -712,13 +697,22 @@ public class Itemy {
         item.setItemMeta(meta);
         return item;
     }
-    
+
     // ==========================================
     // TALIZMANY
     // ==========================================
 
+    private static final LegacyComponentSerializer TALIZMAN_SERIALIZER =
+            LegacyComponentSerializer.legacyAmpersand();
+
     private static String procent(double wartosc) {
         return String.format(Locale.US, "%.1f", wartosc).replace(".", ",") + "%";
+    }
+
+    private static Component talizmanText(String tekst) {
+        return TALIZMAN_SERIALIZER.deserialize(tekst)
+                .decoration(TextDecoration.BOLD, false)
+                .decoration(TextDecoration.ITALIC, false);
     }
 
     private static ItemStack stworzTalizman(
@@ -727,36 +721,31 @@ public class Itemy {
             int customModelData,
             String id,
             String nazwa,
-            NamedTextColor kolor,
             double wartosc,
             String... opis
     ) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
 
-        meta.displayName(
-                pogrubiony(nazwa, kolor)
-        );
+        meta.displayName(talizmanText(nazwa));
 
         List<Component> lore = new ArrayList<>();
 
         for (String linia : opis) {
             lore.add(linia.isEmpty()
                     ? Component.empty()
-                    : tekst(linia, NamedTextColor.GRAY));
+                    : talizmanText(linia));
         }
 
         meta.lore(lore);
         meta.setCustomModelData(customModelData);
 
-        // Unikalny identyfikator talizmanu
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "talizman_id"),
                 PersistentDataType.STRING,
                 id
         );
 
-        // Wylosowana wartość procentowa
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "talizman_wartosc"),
                 PersistentDataType.DOUBLE,
@@ -769,150 +758,108 @@ public class Itemy {
 
     // ODPORNOŚĆ I
     public static ItemStack talizmanOdpornosciI(JavaPlugin plugin) {
-        return stworzTalizman(
-                plugin,
-                Material.WHITE_DYE,
-                13,
+        return stworzTalizman(plugin, Material.WHITE_DYE, 13,
                 "odpornosc_1",
-                "🛡 Talizman odporności I",
-                NamedTextColor.AQUA,
+                "&b🛡 Talizman odporności I",
                 5.0,
-                "» +5% odporności na obrażenia."
+                "&b| +5% &7odporności na obrażenia."
         );
     }
 
     // ODPORNOŚĆ II
     public static ItemStack talizmanOdpornosciII(JavaPlugin plugin) {
-        return stworzTalizman(
-                plugin,
-                Material.WHITE_DYE,
-                12,
+        return stworzTalizman(plugin, Material.WHITE_DYE, 12,
                 "odpornosc_2",
-                "🛡 Talizman odporności II",
-                NamedTextColor.AQUA,
+                "&b🛡 Talizman odporności II",
                 8.0,
-                "» +8% odporności na obrażenia."
+                "&b| +8% &7odporności na obrażenia."
         );
     }
 
     // ODPORNOŚĆ III
-    public static ItemStack talizmanOdpornosciIII(
-            JavaPlugin plugin,
-            double wartosc
-    ) {
-        return stworzTalizman(
-                plugin,
-                Material.WHITE_DYE,
-                11,
+    public static ItemStack talizmanOdpornosciIII(JavaPlugin plugin, double wartosc) {
+        return stworzTalizman(plugin, Material.WHITE_DYE, 11,
                 "odpornosc_3",
-                "🛡 Talizman odporności III",
-                NamedTextColor.AQUA,
+                "&b🛡 Talizman odporności III",
                 wartosc,
-                "» +" + procent(wartosc) + " odporności na obrażenia.",
+                "&b| +" + procent(wartosc) + " &7odporności na obrażenia.",
+                "&b| &7Zakres losowania: &b+10% &7- &b15%",
                 "",
-                "☆ Bonus maksymalnego poziomu:",
-                "Kiedy przyjmujesz obrażenia,",
-                "masz szansę otrzymać złote serce absorpcji."
+                "&e☆ &bBonus maksymalnego poziomu:",
+                "&7Kiedy przyjmujesz obrażenia,",
+                "&7masz szansę otrzymać &ezłote serce &7absorpcji."
         );
     }
 
     // SIŁA I
     public static ItemStack talizmanSilyI(JavaPlugin plugin) {
-        return stworzTalizman(
-                plugin,
-                Material.WHITE_DYE,
-                7,
+        return stworzTalizman(plugin, Material.WHITE_DYE, 7,
                 "sila_1",
-                "⚔ Talizman siły I",
-                NamedTextColor.LIGHT_PURPLE,
+                "&d⚔ Talizman siły I",
                 4.0,
-                "» +4% bonusowych obrażeń."
+                "&d| +4% &7bonusowych obrażeń."
         );
     }
 
     // SIŁA II
     public static ItemStack talizmanSilyII(JavaPlugin plugin) {
-        return stworzTalizman(
-                plugin,
-                Material.WHITE_DYE,
-                6,
+        return stworzTalizman(plugin, Material.WHITE_DYE, 6,
                 "sila_2",
-                "⚔ Talizman siły II",
-                NamedTextColor.LIGHT_PURPLE,
+                "&d⚔ Talizman siły II",
                 6.0,
-                "» +6% bonusowych obrażeń."
+                "&d| +6% &7bonusowych obrażeń."
         );
     }
 
     // SIŁA III
-    public static ItemStack talizmanSilyIII(
-            JavaPlugin plugin,
-            double wartosc
-    ) {
-        return stworzTalizman(
-                plugin,
-                Material.WHITE_DYE,
-                5,
+    public static ItemStack talizmanSilyIII(JavaPlugin plugin, double wartosc) {
+        return stworzTalizman(plugin, Material.WHITE_DYE, 5,
                 "sila_3",
-                "⚔ Talizman siły III",
-                NamedTextColor.LIGHT_PURPLE,
+                "&d⚔ Talizman siły III",
                 wartosc,
-                "» +" + procent(wartosc) + " bonusowych obrażeń.",
+                "&d| +" + procent(wartosc) + " &7bonusowych obrażeń.",
+                "&d| &7Zakres losowania: &d+8% &7- &d15%",
                 "",
-                "☆ Bonus maksymalnego poziomu:",
-                "Po zjedzeniu czegokolwiek istnieje szansa",
-                "na otrzymanie efektu szybkości na 10 sekund."
+                "&e☆ &bBonus maksymalnego poziomu:",
+                "&7Po zjedzeniu czegokolwiek istnieje szansa,",
+                "&7na otrzymanie efektu &eszybkości &7na &e10 sekund."
         );
     }
 
-    // SZYBKOŚĆ III
-    public static ItemStack talizmanSzybkosciIII(JavaPlugin plugin) {
-        return stworzTalizman(
-                plugin,
-                Material.ORANGE_DYE,
-                1,
-                "szybkosc_3",
-                "🍬 Talizman szybkości III",
-                NamedTextColor.AQUA,
+    // SŁODKOŚCI III
+    public static ItemStack talizmanSlodkosciIII(JavaPlugin plugin) {
+        return stworzTalizman(plugin, Material.ORANGE_DYE, 1,
+                "slodkosci_3",
+                "&b🍬 Talizman słodkości III",
                 0.0,
-                "+1 sekunda regeneracji ze złotych jabłek.",
+                "&e| +1s &7czasu trwania regeneracji ze złotych jabłek.",
                 "",
-                "» Zwiększa obrażenia krytyczne."
+                "» &fZwiększa obrażenia krytyczne."
         );
     }
 
     // TALIZMAN DROPU
     public static ItemStack talizmanDropu(JavaPlugin plugin) {
-        return stworzTalizman(
-                plugin,
-                Material.LAPIS_LAZULI,
-                274,
+        return stworzTalizman(plugin, Material.LAPIS_LAZULI, 274,
                 "drop",
-                "✉ Talizman dropu",
-                NamedTextColor.AQUA,
+                "&b✉ Talizman dropu",
                 0.0,
-                "» Po zabiciu gracza jego przedmioty",
-                "trafiają do wolnego miejsca",
-                "w Twoim Ender Cheście."
+                "&7» Po &czabiciu &7gracza jego przedmioty",
+                "» &7trafiają do wolnego miejsca",
+                "» &7w Twoim &denderchescie."
         );
     }
 
     // ŚWIĄTECZNY CZAS
-    public static ItemStack talizmanSwiatecznegoCzasu(
-            JavaPlugin plugin,
-            double wartosc
-    ) {
-        return stworzTalizman(
-                plugin,
-                Material.WHITE_DYE,
-                14,
+    public static ItemStack talizmanSwiatecznegoCzasu(JavaPlugin plugin, double wartosc) {
+        return stworzTalizman(plugin, Material.WHITE_DYE, 14,
                 "swiateczny_czas",
-                "❄ Talizman Świątecznego czasu",
-                NamedTextColor.WHITE,
+                "&f❄ Talizman Świątecznego czasu",
                 wartosc,
-                "-" + procent(wartosc) + " cooldownu przedmiotów eventowych.",
+                "&f| -" + procent(wartosc) + " &7cooldownu na użycie przedmiotów eventowych.",
                 "",
-                "Talizman eventowy - posiada tylko 1 poziom."
+                "&7» &fTalizman eventowy - posiada tylko 1 poziom.",
+                "&f| &7Zakres losowania: &e+5% &7- &e20%"
         );
     }
 }
