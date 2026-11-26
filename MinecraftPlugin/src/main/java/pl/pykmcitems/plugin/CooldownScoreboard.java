@@ -27,11 +27,13 @@ public final class CooldownScoreboard implements Listener {
     private static final LegacyComponentSerializer LEGACY =
             LegacyComponentSerializer.legacySection();
 
-    private static final int MAX_COOLDOWN_LINES = 11;
+    private static final int MAX_COOLDOWN_LINES = 8;
     private static final int MAX_LINES = 15;
 
     private final JavaPlugin plugin;
 
+    // Lokalna kopia służąca wyłącznie do wyświetlania cooldownów.
+    // Główne dane przechowuje ItemCooldownManager.
     private final Map<UUID, Map<String, CooldownEntry>> cooldowns =
             new HashMap<>();
 
@@ -122,8 +124,6 @@ public final class CooldownScoreboard implements Listener {
 
         for (int i = 0; i < MAX_LINES; i++) {
             String teamName = "pykmcline" + i;
-
-            // Każda linia otrzymuje unikalny, niewidoczny wpis.
             String entry = ChatColor.values()[i].toString();
 
             Team team = board.registerNewTeam(teamName);
@@ -176,7 +176,6 @@ public final class CooldownScoreboard implements Listener {
             return;
         }
 
-        // Przywrócenie scoreboardu, jeśli inny plugin go nadpisał.
         if (player.getScoreboard() != data.board) {
             player.setScoreboard(data.board);
         }
@@ -229,12 +228,9 @@ public final class CooldownScoreboard implements Listener {
                     seconds % 60
             );
 
-            lines.add(
-                    entry.displayName + "&7: " + time
-            );
+            lines.add(entry.displayName + "&7: " + time);
         }
 
-        // Aktualizujemy istniejące drużyny zamiast usuwać je i tworzyć ponownie.
         for (int i = 0; i < MAX_LINES; i++) {
             Team team = data.teams[i];
             String entry = data.entries[i];
@@ -264,8 +260,13 @@ public final class CooldownScoreboard implements Listener {
         Player player = event.getPlayer();
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (!player.isOnline()) return;
-            if (disabled.contains(player.getUniqueId())) return;
+            if (!player.isOnline()) {
+                return;
+            }
+
+            if (disabled.contains(player.getUniqueId())) {
+                return;
+            }
 
             createBoard(player);
         }, 2L);
@@ -273,14 +274,9 @@ public final class CooldownScoreboard implements Listener {
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
-        Player player = event.getEntity();
-        UUID uuid = player.getUniqueId();
-
-        // Usunięcie wszystkich cooldownów po śmierci.
-        cooldowns.remove(uuid);
-
-        // Natychmiastowe odświeżenie scoreboardu.
-        updatePlayer(player);
+        // Cooldowny pozostają aktywne po śmierci.
+        // ItemCooldownManager nadal przechowuje ich właściwe czasy.
+        updatePlayer(event.getEntity());
     }
 
     @EventHandler
@@ -289,6 +285,9 @@ public final class CooldownScoreboard implements Listener {
 
         boards.remove(uuid);
         disabled.remove(uuid);
+
+        // Usuwamy wyłącznie lokalną kopię danych scoreboardu.
+        // ItemCooldownManager zachowuje cooldowny w pamięci i pliku.
         cooldowns.remove(uuid);
     }
 
