@@ -203,7 +203,6 @@ public final class TalizmanyManager {
     }
 
     public void save() {
-        config.getKeys(false).forEach(config::set);
 
         for (Map.Entry<UUID, List<ItemStack>> entry : equipped.entrySet()) {
             config.set(entry.getKey().toString(), entry.getValue());
