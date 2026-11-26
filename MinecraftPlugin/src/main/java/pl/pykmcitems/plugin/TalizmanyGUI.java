@@ -17,8 +17,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class TalizmanyGUI implements Listener {
 
@@ -72,11 +72,48 @@ public class TalizmanyGUI implements Listener {
                 Material.BOOK, "§6Lista talizmanów"
         ));
 
-        inventory.setItem(15, button(
-                Material.WHITE_DYE, "§fZarządzaj talizmanami"
-        ));
+        ItemStack zarzadzanie = new ItemStack(Material.WHITE_DYE);
+        ItemMeta meta = zarzadzanie.getItemMeta();
+        meta.setDisplayName("§fZarządzaj talizmanami");
+        meta.setCustomModelData(5);
+        zarzadzanie.setItemMeta(meta);
+
+        inventory.setItem(15, zarzadzanie);
 
         player.openInventory(inventory);
+    }
+
+    private ItemStack ukryjWartosc(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR) {
+            return item;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+
+        if (meta == null) {
+            return item;
+        }
+
+        if (meta.hasDisplayName()) {
+            String name = meta.getDisplayName();
+
+            if (name.contains("%")) {
+                meta.setDisplayName(name.replaceAll("[0-9]+([,.][0-9]+)?%", "???"));
+            }
+        }
+
+        if (meta.hasLore()) {
+            List<String> lore = new ArrayList<>();
+
+            for (String line : meta.getLore()) {
+                lore.add(line.replaceAll("[0-9]+([,.][0-9]+)?%", "???"));
+            }
+
+            meta.setLore(lore);
+        }
+
+        item.setItemMeta(meta);
+        return item;
     }
 
     private void openList(Player player) {
@@ -86,21 +123,21 @@ public class TalizmanyGUI implements Listener {
 
         inventory.setItem(11, Itemy.talizmanOdpornosciI(plugin));
         inventory.setItem(20, Itemy.talizmanOdpornosciII(plugin));
-        inventory.setItem(29, Itemy.talizmanOdpornosciIII(
-                plugin, losuj(10, 15)
+        inventory.setItem(29, ukryjWartosc(
+                Itemy.talizmanOdpornosciIII(plugin, 10.0)
         ));
 
         inventory.setItem(13, Itemy.talizmanSilyI(plugin));
         inventory.setItem(22, Itemy.talizmanSilyII(plugin));
-        inventory.setItem(31, Itemy.talizmanSilyIII(
-                plugin, losuj(8, 15)
+        inventory.setItem(31, ukryjWartosc(
+                Itemy.talizmanSilyIII(plugin, 8.0)
         ));
 
         inventory.setItem(15, Itemy.talizmanSlodkosciIII(plugin));
         inventory.setItem(24, Itemy.talizmanDropu(plugin));
 
-        inventory.setItem(33, Itemy.talizmanSwiatecznegoCzasu(
-                plugin, losuj(5, 20)
+        inventory.setItem(33, ukryjWartosc(
+                Itemy.talizmanSwiatecznegoCzasu(plugin, 5.0)
         ));
 
         inventory.setItem(53, button(
@@ -108,10 +145,6 @@ public class TalizmanyGUI implements Listener {
         ));
 
         player.openInventory(inventory);
-    }
-
-    private int losuj(int min, int max) {
-        return ThreadLocalRandom.current().nextInt(min, max + 1);
     }
 
     private void openOwn(Player player) {
@@ -151,7 +184,6 @@ public class TalizmanyGUI implements Listener {
             return;
         }
 
-        // Blokada wszystkich operacji ekwipunku.
         event.setCancelled(true);
         event.setResult(Event.Result.DENY);
 
@@ -159,17 +191,14 @@ public class TalizmanyGUI implements Listener {
             return;
         }
 
-        // Nie obsługujemy kliknięć w dolny ekwipunek.
         if (event.getClickedInventory() != top) {
             return;
         }
 
-        // Tylko zwykły lewy przycisk.
         if (event.getClick() != ClickType.LEFT) {
             return;
         }
 
-        // Nie pozwalamy na żadne operacje przenoszenia.
         InventoryAction action = event.getAction();
 
         if (action != InventoryAction.NOTHING
