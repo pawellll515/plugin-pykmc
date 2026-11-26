@@ -101,12 +101,10 @@ public final class TalizmanyManager implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
 
-        // Obsługujemy wyłącznie główną rękę.
         if (event.getHand() != EquipmentSlot.HAND) {
             return;
         }
 
-        // Tylko lewy przycisk myszy.
         if (event.getAction() != Action.LEFT_CLICK_AIR
                 && event.getAction() != Action.LEFT_CLICK_BLOCK) {
             return;
@@ -116,26 +114,23 @@ public final class TalizmanyManager implements Listener {
 
         ItemStack item = player.getInventory().getItemInMainHand();
 
-        // Sprawdzamy, czy trzymany przedmiot jest talizmanem.
         String id = getId(item);
 
         if (id == null) {
             return;
         }
 
-        // Jeśli nie uda się założyć, przedmiot zostaje w ręce.
         if (!equip(player, item)) {
+            event.setCancelled(true);
             return;
         }
 
-        // Zabieramy jedną sztukę z ręki.
         if (item.getAmount() <= 1) {
             player.getInventory().setItemInMainHand(null);
         } else {
             item.setAmount(item.getAmount() - 1);
         }
 
-        // Dźwięk założenia talizmanu.
         player.playSound(
                 player.getLocation(),
                 Sound.BLOCK_VAULT_ACTIVATE,
@@ -143,7 +138,6 @@ public final class TalizmanyManager implements Listener {
                 1.0f
         );
 
-        // Nie niszczymy bloku przy zakładaniu talizmanu.
         event.setCancelled(true);
     }
 
@@ -158,16 +152,39 @@ public final class TalizmanyManager implements Listener {
             return false;
         }
 
-        list.remove(slot);
+        // Pobieramy talizman przed usunięciem z listy.
+        ItemStack item = list.remove(slot).clone();
 
+        // Usuwamy pustą listę gracza.
         if (list.isEmpty()) {
             equipped.remove(player.getUniqueId());
         }
 
+        // Zwracamy talizman do ekwipunku.
+        Map<Integer, ItemStack> leftovers =
+                player.getInventory().addItem(item);
+
+        // Jeśli ekwipunek jest pełny, wyrzucamy talizman obok gracza.
+        for (ItemStack leftover : leftovers.values()) {
+            player.getWorld().dropItemNaturally(
+                    player.getLocation(),
+                    leftover
+            );
+        }
+
+        // Zapisujemy zmiany i aktualizujemy ikony.
         save();
         updateAllIcons();
 
-        player.sendMessage("§aZdjęto talizman!");
+        player.playSound(
+                player.getLocation(),
+                Sound.BLOCK_VAULT_DEACTIVATE,
+                1.0f,
+                1.0f
+        );
+
+        player.sendMessage("§aZdjęto talizman! §7Wrócił do twojego ekwipunku.");
+
         return true;
     }
 
