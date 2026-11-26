@@ -16,6 +16,7 @@ public class Main extends JavaPlugin {
     private ObsikanaSniezka obsikanaSniezka;
     private LukWiedzmy lukWiedzmy;
     private CooldownScoreboard cooldownScoreboard;
+    private TalizmanyGUI talizmanyGUI;
 
     @Override
     public void onEnable() {
@@ -45,6 +46,9 @@ public class Main extends JavaPlugin {
 
         klataMeduzy = new KlataMeduzy(this);
         getServer().getPluginManager().registerEvents(klataMeduzy, this);
+
+        talizmanyGUI = new TalizmanyGUI();
+        getServer().getPluginManager().registerEvents(talizmanyGUI, this);
 
         getLogger().info("PykMCItems zostal wlaczony!");
     }
@@ -98,6 +102,11 @@ public class Main extends JavaPlugin {
             cooldownScoreboard.toggle(player);
             return true;
         }
+
+        if (command.getName().equalsIgnoreCase("talizmany")) {
+            talizmanyGUI.openMain(player);
+            return true;
+        }    
 
         if (command.getName().equalsIgnoreCase("ustawglowke")) {
             if (!player.hasPermission("pykmcitems.ustawglowke")) {
