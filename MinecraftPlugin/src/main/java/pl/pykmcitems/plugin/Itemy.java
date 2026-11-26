@@ -20,6 +20,7 @@ import org.bukkit.inventory.meta.trim.TrimPattern;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class Itemy {
 
@@ -710,5 +711,208 @@ public class Itemy {
 
         item.setItemMeta(meta);
         return item;
+    }
+    
+    // ==========================================
+    // TALIZMANY
+    // ==========================================
+
+    private static String procent(double wartosc) {
+        return String.format(Locale.US, "%.1f", wartosc).replace(".", ",") + "%";
+    }
+
+    private static ItemStack stworzTalizman(
+            JavaPlugin plugin,
+            Material material,
+            int customModelData,
+            String id,
+            String nazwa,
+            NamedTextColor kolor,
+            double wartosc,
+            String... opis
+    ) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(
+                pogrubiony(nazwa, kolor)
+        );
+
+        List<Component> lore = new ArrayList<>();
+
+        for (String linia : opis) {
+            lore.add(linia.isEmpty()
+                    ? Component.empty()
+                    : tekst(linia, NamedTextColor.GRAY));
+        }
+
+        meta.lore(lore);
+        meta.setCustomModelData(customModelData);
+
+        // Unikalny identyfikator talizmanu
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "talizman_id"),
+                PersistentDataType.STRING,
+                id
+        );
+
+        // Wylosowana wartość procentowa
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "talizman_wartosc"),
+                PersistentDataType.DOUBLE,
+                wartosc
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    // ODPORNOŚĆ I
+    public static ItemStack talizmanOdpornosciI(JavaPlugin plugin) {
+        return stworzTalizman(
+                plugin,
+                Material.WHITE_DYE,
+                13,
+                "odpornosc_1",
+                "🛡 Talizman odporności I",
+                NamedTextColor.AQUA,
+                5.0,
+                "» +5% odporności na obrażenia."
+        );
+    }
+
+    // ODPORNOŚĆ II
+    public static ItemStack talizmanOdpornosciII(JavaPlugin plugin) {
+        return stworzTalizman(
+                plugin,
+                Material.WHITE_DYE,
+                12,
+                "odpornosc_2",
+                "🛡 Talizman odporności II",
+                NamedTextColor.AQUA,
+                8.0,
+                "» +8% odporności na obrażenia."
+        );
+    }
+
+    // ODPORNOŚĆ III
+    public static ItemStack talizmanOdpornosciIII(
+            JavaPlugin plugin,
+            double wartosc
+    ) {
+        return stworzTalizman(
+                plugin,
+                Material.WHITE_DYE,
+                11,
+                "odpornosc_3",
+                "🛡 Talizman odporności III",
+                NamedTextColor.AQUA,
+                wartosc,
+                "» +" + procent(wartosc) + " odporności na obrażenia.",
+                "",
+                "☆ Bonus maksymalnego poziomu:",
+                "Kiedy przyjmujesz obrażenia,",
+                "masz szansę otrzymać złote serce absorpcji."
+        );
+    }
+
+    // SIŁA I
+    public static ItemStack talizmanSilyI(JavaPlugin plugin) {
+        return stworzTalizman(
+                plugin,
+                Material.WHITE_DYE,
+                7,
+                "sila_1",
+                "⚔ Talizman siły I",
+                NamedTextColor.LIGHT_PURPLE,
+                4.0,
+                "» +4% bonusowych obrażeń."
+        );
+    }
+
+    // SIŁA II
+    public static ItemStack talizmanSilyII(JavaPlugin plugin) {
+        return stworzTalizman(
+                plugin,
+                Material.WHITE_DYE,
+                6,
+                "sila_2",
+                "⚔ Talizman siły II",
+                NamedTextColor.LIGHT_PURPLE,
+                6.0,
+                "» +6% bonusowych obrażeń."
+        );
+    }
+
+    // SIŁA III
+    public static ItemStack talizmanSilyIII(
+            JavaPlugin plugin,
+            double wartosc
+    ) {
+        return stworzTalizman(
+                plugin,
+                Material.WHITE_DYE,
+                5,
+                "sila_3",
+                "⚔ Talizman siły III",
+                NamedTextColor.LIGHT_PURPLE,
+                wartosc,
+                "» +" + procent(wartosc) + " bonusowych obrażeń.",
+                "",
+                "☆ Bonus maksymalnego poziomu:",
+                "Po zjedzeniu czegokolwiek istnieje szansa",
+                "na otrzymanie efektu szybkości na 10 sekund."
+        );
+    }
+
+    // SZYBKOŚĆ III
+    public static ItemStack talizmanSzybkosciIII(JavaPlugin plugin) {
+        return stworzTalizman(
+                plugin,
+                Material.ORANGE_DYE,
+                1,
+                "szybkosc_3",
+                "🍬 Talizman szybkości III",
+                NamedTextColor.AQUA,
+                0.0,
+                "+1 sekunda regeneracji ze złotych jabłek.",
+                "",
+                "» Zwiększa obrażenia krytyczne."
+        );
+    }
+
+    // TALIZMAN DROPU
+    public static ItemStack talizmanDropu(JavaPlugin plugin) {
+        return stworzTalizman(
+                plugin,
+                Material.LAPIS_LAZULI,
+                274,
+                "drop",
+                "✉ Talizman dropu",
+                NamedTextColor.AQUA,
+                0.0,
+                "» Po zabiciu gracza jego przedmioty",
+                "trafiają do wolnego miejsca",
+                "w Twoim Ender Cheście."
+        );
+    }
+
+    // ŚWIĄTECZNY CZAS
+    public static ItemStack talizmanSwiatecznegoCzasu(
+            JavaPlugin plugin,
+            double wartosc
+    ) {
+        return stworzTalizman(
+                plugin,
+                Material.WHITE_DYE,
+                14,
+                "swiateczny_czas",
+                "❄ Talizman Świątecznego czasu",
+                NamedTextColor.WHITE,
+                wartosc,
+                "-" + procent(wartosc) + " cooldownu przedmiotów eventowych.",
+                "",
+                "Talizman eventowy - posiada tylko 1 poziom."
+        );
     }
 }
