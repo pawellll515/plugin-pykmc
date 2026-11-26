@@ -69,12 +69,17 @@ public class Main extends JavaPlugin {
                 this
         );
 
-        talizmanyManager.updateAllIcons();
-
         talizmanyGUI = new TalizmanyGUI(this, talizmanyManager);
 
-                getLogger().info("PykMCItems zostal wlaczony!");
-            }
+        getServer().getPluginManager().registerEvents(
+                talizmanyGUI,
+                this
+        );
+
+        talizmanyManager.updateAllIcons();
+
+        getLogger().info("PykMCItems zostal wlaczony!");
+    }
 
     @Override
     public void onDisable() {
@@ -310,7 +315,7 @@ public class Main extends JavaPlugin {
             }
 
             player.getInventory().addItem(Itemy.obsikanaSniezka(this));
-            player.sendMessage("§aOtrzymales §eObsikana Śnieżkę§a!");
+            player.sendMessage("§aOtrzymales §eObsikaną Śnieżkę§a!");
             return true;
         }
 
