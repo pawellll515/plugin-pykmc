@@ -35,13 +35,22 @@ public class ItemCooldownManager implements Listener {
         loadCooldowns();
     }
 
+    // =====================================================
+    // WCZYTYWANIE COOLDOWNÓW
+    // =====================================================
+
     private void loadCooldowns() {
         cooldowns.clear();
+
+        long now = System.currentTimeMillis();
+        boolean changed = false;
 
         for (String uuidString : config.getKeys(false)) {
             try {
                 UUID uuid = UUID.fromString(uuidString);
-                ConfigurationSection section = config.getConfigurationSection(uuidString);
+
+                ConfigurationSection section =
+                        config.getConfigurationSection(uuidString);
 
                 if (section == null) {
                     continue;
@@ -50,25 +59,50 @@ public class ItemCooldownManager implements Listener {
                 Map<String, Long> playerCooldowns = new HashMap<>();
 
                 for (String itemId : section.getKeys(false)) {
-                    long endTime = config.getLong(uuidString + "." + itemId);
+                    long endTime = config.getLong(
+                            uuidString + "." + itemId
+                    );
 
-                    if (endTime > System.currentTimeMillis()) {
+                    if (endTime > now) {
                         playerCooldowns.put(itemId, endTime);
+                    } else {
+                        config.set(uuidString + "." + itemId, null);
+                        changed = true;
                     }
                 }
 
                 if (!playerCooldowns.isEmpty()) {
                     cooldowns.put(uuid, playerCooldowns);
+                } else {
+                    config.set(uuidString, null);
+                    changed = true;
                 }
+
             } catch (IllegalArgumentException exception) {
-                plugin.getLogger().warning("Nieprawidlowy wpis cooldownu: " + uuidString);
+                plugin.getLogger().warning(
+                        "Nieprawidlowy wpis cooldownu: " + uuidString
+                );
             }
+        }
+
+        if (changed) {
+            save();
         }
     }
 
+    // =====================================================
+    // REDUKCJA COOLDOWNÓW Z TALIZMANU
+    // =====================================================
+
     public double getReductionPercent(Player player) {
+        // Tutaj później zostanie podłączony Talizman
+        // Świątecznego Czasu.
         return 0.0;
     }
+
+    // =====================================================
+    // ROZPOCZYNANIE COOLDOWNU
+    // =====================================================
 
     public boolean tryStartCooldown(
             Player player,
@@ -80,14 +114,20 @@ public class ItemCooldownManager implements Listener {
             return false;
         }
 
-        setCooldown(player, itemId, displayName, baseDurationMillis);
+        setCooldown(
+                player,
+                itemId,
+                displayName,
+                baseDurationMillis
+        );
+
         return true;
     }
 
-    /**
-     * Ustawia cooldown niezależnie od tego, czy gracz ma już aktywny.
-     * Nadpisuje poprzedni czas.
-     */
+    // =====================================================
+    // USTAWIANIE / NADPISYWANIE COOLDOWNU
+    // =====================================================
+
     public void setCooldown(
             Player player,
             String itemId,
@@ -101,13 +141,18 @@ public class ItemCooldownManager implements Listener {
 
         long finalDuration = Math.max(
                 1L,
-                Math.round(baseDurationMillis * (1.0 - reduction / 100.0))
+                Math.round(
+                        baseDurationMillis * (1.0 - reduction / 100.0)
+                )
         );
 
         long endTime = System.currentTimeMillis() + finalDuration;
 
         Map<String, Long> playerCooldowns =
-                cooldowns.computeIfAbsent(uuid, key -> new HashMap<>());
+                cooldowns.computeIfAbsent(
+                        uuid,
+                        key -> new HashMap<>()
+                );
 
         playerCooldowns.put(itemId, endTime);
 
@@ -122,13 +167,18 @@ public class ItemCooldownManager implements Listener {
         );
     }
 
+    // =====================================================
+    // SPRAWDZANIE COOLDOWNU
+    // =====================================================
+
     public boolean isOnCooldown(Player player, String itemId) {
         return getRemainingCooldown(player, itemId) > 0;
     }
 
     public long getRemainingCooldown(Player player, String itemId) {
-        Map<String, Long> playerCooldowns =
-                cooldowns.get(player.getUniqueId());
+        UUID uuid = player.getUniqueId();
+
+        Map<String, Long> playerCooldowns = cooldowns.get(uuid);
 
         if (playerCooldowns == null) {
             return 0L;
@@ -144,10 +194,10 @@ public class ItemCooldownManager implements Listener {
 
         if (remaining <= 0) {
             playerCooldowns.remove(itemId);
-            config.set(player.getUniqueId() + "." + itemId, null);
+            config.set(uuid + "." + itemId, null);
 
             if (playerCooldowns.isEmpty()) {
-                cooldowns.remove(player.getUniqueId());
+                cooldowns.remove(uuid);
             }
 
             save();
@@ -156,6 +206,10 @@ public class ItemCooldownManager implements Listener {
 
         return remaining;
     }
+
+    // =====================================================
+    // PRZYWRACANIE COOLDOWNÓW PO WEJŚCIU
+    // =====================================================
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
@@ -168,8 +222,10 @@ public class ItemCooldownManager implements Listener {
             return;
         }
 
+        long now = System.currentTimeMillis();
+
         for (Map.Entry<String, Long> entry : playerCooldowns.entrySet()) {
-            long remaining = entry.getValue() - System.currentTimeMillis();
+            long remaining = entry.getValue() - now;
 
             if (remaining > 0) {
                 scoreboard.startCooldown(
@@ -182,13 +238,56 @@ public class ItemCooldownManager implements Listener {
         }
     }
 
+    // =====================================================
+    // NAZWY PRZEDMIOTÓW NA SCOREBOARDZIE
+    // =====================================================
+
     private String getDisplayName(String itemId) {
         return switch (itemId) {
-            case "koniczynka" -> "&a&lKoniczynka";
-            case "lodolap" -> "&b&lLodołap";
-            default -> "&f" + itemId;
+            case "koniczynka" ->
+                    "&a&lKoniczynka";
+
+            case "rog" ->
+                    "&b&lRóg Niebios";
+
+            case "glodomiot" ->
+                    "&6&lGłodomiot";
+
+            case "rozpadacz" ->
+                    "&4&lRozpadacz";
+
+            case "rozga" ->
+                    "&7&lRózga";
+
+            case "katana" ->
+                    "&a&lŚwiąteczna Katana";
+
+            case "topor" ->
+                    "&6&lTopór Wykluczenia";
+
+            case "lodolap" ->
+                    "&b&lLodołap";
+
+            case "buda" ->
+                    "&e&lBuda";
+
+            case "zlamane" ->
+                    "&c&lZłamane Serce";
+
+            case "berlo" ->
+                    "&x&E&A&0&0&0&0Berło Drakuli";
+
+            case "luk_wiedzmy" ->
+                    "&dŁuk Wiedźmy";
+
+            default ->
+                    "&f" + itemId;
         };
     }
+
+    // =====================================================
+    // ZAPIS DO PLIKU
+    // =====================================================
 
     public void save() {
         try {
@@ -197,9 +296,11 @@ public class ItemCooldownManager implements Listener {
             }
 
             config.save(file);
+
         } catch (IOException exception) {
             plugin.getLogger().severe(
-                    "Nie udalo sie zapisac cooldownow: " + exception.getMessage()
+                    "Nie udalo sie zapisac cooldownow: "
+                            + exception.getMessage()
             );
         }
     }
