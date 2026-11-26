@@ -4,8 +4,11 @@ package pl.pykmcitems.plugin;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
@@ -47,7 +50,9 @@ public class TalizmanyGUI implements Listener {
 
     private Inventory createInventory(Menu menu, int rows, String title) {
         MenuHolder holder = new MenuHolder(menu);
-        Inventory inventory = Bukkit.createInventory(holder, rows * 9, title);
+        Inventory inventory = Bukkit.createInventory(
+                holder, rows * 9, title
+        );
         holder.inventory = inventory;
         return inventory;
     }
@@ -146,31 +151,36 @@ public class TalizmanyGUI implements Listener {
             return;
         }
 
-        // Blokuje wszystkie sposoby przenoszenia przedmiotów.
+        // Blokada wszystkich operacji ekwipunku.
         event.setCancelled(true);
+        event.setResult(Event.Result.DENY);
 
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
 
-        // Obsługujemy wyłącznie kliknięcia w górne menu.
+        // Nie obsługujemy kliknięć w dolny ekwipunek.
         if (event.getClickedInventory() != top) {
             return;
         }
 
-        // PPM nic nie robi.
-        if (event.isRightClick()) {
+        // Tylko zwykły lewy przycisk.
+        if (event.getClick() != ClickType.LEFT) {
             return;
         }
 
-        // Blokujemy inne typy kliknięć, np. środkowy przycisk.
-        if (!event.isLeftClick()) {
+        // Nie pozwalamy na żadne operacje przenoszenia.
+        InventoryAction action = event.getAction();
+
+        if (action != InventoryAction.NOTHING
+                && action != InventoryAction.PICKUP_ALL) {
             return;
         }
 
         int slot = event.getRawSlot();
 
         switch (holder.menu) {
+
             case MAIN -> {
                 if (slot == 11) {
                     openList(player);
@@ -192,13 +202,6 @@ public class TalizmanyGUI implements Listener {
                 }
 
                 if (manager.equip(player, item)) {
-                    player.playSound(
-                            player.getLocation(),
-                            "minecraft:block.vault.activate",
-                            1.0f,
-                            1.0f
-                    );
-
                     openOwn(player);
                 }
             }
@@ -229,7 +232,9 @@ public class TalizmanyGUI implements Listener {
     public void onInventoryDrag(InventoryDragEvent event) {
         if (event.getView().getTopInventory().getHolder()
                 instanceof MenuHolder) {
+
             event.setCancelled(true);
+            event.setResult(Event.Result.DENY);
         }
     }
 }
