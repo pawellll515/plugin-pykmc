@@ -95,9 +95,17 @@ public class ItemCooldownManager implements Listener {
     // =====================================================
 
     public double getReductionPercent(Player player) {
-        // Tutaj później zostanie podłączony Talizman
-        // Świątecznego Czasu.
-        return 0.0;
+        if (!(plugin instanceof Main main)) {
+            return 0.0;
+        }
+
+        TalizmanyManager manager = main.getTalizmanyManager();
+
+        if (manager == null) {
+            return 0.0;
+        }
+
+        return manager.getValue(player, "swiateczny_czas");
     }
 
     // =====================================================
@@ -244,44 +252,19 @@ public class ItemCooldownManager implements Listener {
 
     private String getDisplayName(String itemId) {
         return switch (itemId) {
-            case "koniczynka" ->
-                    "&a&lKoniczynka";
-
-            case "rog" ->
-                    "&b&lRóg Niebios";
-
-            case "glodomiot" ->
-                    "&6&lGłodomiot";
-
-            case "rozpadacz" ->
-                    "&4&lRozpadacz";
-
-            case "rozga" ->
-                    "&7&lRózga";
-
-            case "katana" ->
-                    "&a&lŚwiąteczna Katana";
-
-            case "topor" ->
-                    "&6&lTopór Wykluczenia";
-
-            case "lodolap" ->
-                    "&b&lLodołap";
-
-            case "buda" ->
-                    "&e&lBuda";
-
-            case "zlamane" ->
-                    "&c&lZłamane Serce";
-
-            case "berlo" ->
-                    "&x&E&A&0&0&0&0Berło Drakuli";
-
-            case "luk_wiedzmy" ->
-                    "&dŁuk Wiedźmy";
-
-            default ->
-                    "&f" + itemId;
+            case "koniczynka" -> "&a&lKoniczynka";
+            case "rog" -> "&b&lRóg Niebios";
+            case "glodomiot" -> "&6&lGłodomiot";
+            case "rozpadacz" -> "&4&lRozpadacz";
+            case "rozga" -> "&7&lRózga";
+            case "katana" -> "&a&lŚwiąteczna Katana";
+            case "topor" -> "&6&lTopór Wykluczenia";
+            case "lodolap" -> "&b&lLodołap";
+            case "buda" -> "&e&lBuda";
+            case "zlamane" -> "&c&lZłamane Serce";
+            case "berlo" -> "&x&E&A&0&0&0&0Berło Drakuli";
+            case "luk_wiedzmy" -> "&dŁuk Wiedźmy";
+            default -> "&f" + itemId;
         };
     }
 
