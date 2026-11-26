@@ -33,13 +33,14 @@ public class SwiatecznaKatana implements Listener {
 
     private final JavaPlugin plugin;
     private final NamespacedKey katanaKey;
+    private final ItemCooldownManager cooldownManager;
 
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
     private final Map<UUID, BukkitRunnable> activeFreezes = new HashMap<>();
 
     public SwiatecznaKatana(JavaPlugin plugin) {
         this.plugin = plugin;
         this.katanaKey = new NamespacedKey(plugin, "katana");
+        this.cooldownManager = ((Main) plugin).getItemCooldownManager();
     }
 
     private boolean isKatana(ItemStack item) {
@@ -89,12 +90,8 @@ public class SwiatecznaKatana implements Listener {
 
         event.setCancelled(true);
 
-        UUID uuid = player.getUniqueId();
-
-        long now = System.currentTimeMillis();
-        long cooldownEnd = cooldowns.getOrDefault(uuid, 0L);
-
-        if (cooldownEnd > now) {
+        // Sprawdzanie wspólnego cooldownu
+        if (cooldownManager.isOnCooldown(player, "katana")) {
             player.sendActionBar(Component.text(
                     "Świąteczna Katana jest na cooldownie!",
                     NamedTextColor.RED
@@ -116,8 +113,15 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
-        cooldowns.put(uuid, now + 90_000L);
-        ((Main) plugin).getCooldownScoreboard().startCooldown(player, "katana", "&a&lŚwiąteczna Katana", 90_000L);
+        // Rozpoczęcie cooldownu dopiero po udanej teleportacji
+        if (!cooldownManager.tryStartCooldown(
+                player,
+                "katana",
+                "&a&lŚwiąteczna Katana",
+                90_000L
+        )) {
+            return;
+        }
 
         if (target.isOnline() && !target.isDead()) {
             target.damage(8.0, player);
@@ -228,8 +232,6 @@ public class SwiatecznaKatana implements Listener {
         }
 
         // Nie wymagamy bloku pod nogami.
-        // Dzięki temu teleportacja działa również w powietrzu.
-
         return true;
     }
 
@@ -280,8 +282,6 @@ public class SwiatecznaKatana implements Listener {
 
         UUID uuid = event.getPlayer().getUniqueId();
 
-        cooldowns.remove(uuid);
-
         BukkitRunnable freeze = activeFreezes.remove(uuid);
 
         if (freeze != null) {
@@ -293,8 +293,6 @@ public class SwiatecznaKatana implements Listener {
     public void onDeath(PlayerDeathEvent event) {
 
         UUID uuid = event.getEntity().getUniqueId();
-
-        cooldowns.remove(uuid);
 
         BukkitRunnable freeze = activeFreezes.remove(uuid);
 
