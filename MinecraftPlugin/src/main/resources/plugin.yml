@@ -19,11 +19,19 @@ commands:
     description: Nadaje Koniczynke
     usage: /koniczyna
     permission: pykmcitems.koniczyna
-    
+
   dajtalizman:
     description: Nadaje fizyczny talizman graczowi
     usage: /dajtalizman <gracz> <id> [wartosc]
     permission: pykmcitems.dajtalizman
+
+  pykmc-internal-clear:
+    description: Wewnętrzne czyszczenie danych gracza
+    usage: /pykmc-internal-clear <gracz>
+
+  pykmc-internal-give-talisman:
+    description: Wewnętrzne nadawanie talizmanów przez Skript
+    usage: /pykmc-internal-give-talisman <gracz> <id> [wartosc]
 
   rog:
     description: Nadaje Rog Niebios
@@ -34,7 +42,7 @@ commands:
     description: Nadaje Glodomiot
     usage: /glodomiot
     permission: pykmcitems.glodomiot
-    
+
   ec:
     description: Otwiera powiększony Ender Chest
     usage: /ec
@@ -150,7 +158,7 @@ permissions:
     default: op
 
   pykmcitems.katana:
-    description: Pozwala nadawac Swiateczna Katane
+    description: Pozwala nadawac Katane
     default: op
 
   pykmcitems.lodolap:
@@ -172,7 +180,7 @@ permissions:
   pykmcitems.berlo:
     description: Pozwala otrzymać Berło Drakuli
     default: op
-    
+
   pykmcitems.dajtalizman:
     description: Pozwala nadawać talizmany
     default: op
