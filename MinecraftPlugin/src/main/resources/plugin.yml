@@ -19,6 +19,11 @@ commands:
     description: Nadaje Koniczynke
     usage: /koniczyna
     permission: pykmcitems.koniczyna
+    
+  dajtalizman:
+    description: Nadaje fizyczny talizman graczowi
+    usage: /dajtalizman <gracz> <id> [wartosc]
+    permission: pykmcitems.dajtalizman
 
   rog:
     description: Nadaje Rog Niebios
@@ -158,4 +163,8 @@ permissions:
 
   pykmcitems.berlo:
     description: Pozwala otrzymać Berło Drakuli
+    default: op
+    
+  pykmcitems.dajtalizman:
+    description: Pozwala nadawać talizmany
     default: op
