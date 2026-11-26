@@ -2,6 +2,7 @@
 package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import org.bukkit.Bukkit;
@@ -32,8 +33,6 @@ public final class CooldownScoreboard implements Listener {
 
     private final JavaPlugin plugin;
 
-    // Lokalna kopia służąca wyłącznie do wyświetlania cooldownów.
-    // Główne dane przechowuje ItemCooldownManager.
     private final Map<UUID, Map<String, CooldownEntry>> cooldowns =
             new HashMap<>();
 
@@ -60,6 +59,10 @@ public final class CooldownScoreboard implements Listener {
         );
     }
 
+    // ==========================================
+    // COOLDOWNY
+    // ==========================================
+
     public void startCooldown(
             Player player,
             String id,
@@ -78,6 +81,10 @@ public final class CooldownScoreboard implements Listener {
         );
     }
 
+    // ==========================================
+    // WŁĄCZANIE / WYŁĄCZANIE SCOREBOARDA
+    // ==========================================
+
     public void toggle(Player player) {
         UUID uuid = player.getUniqueId();
 
@@ -93,8 +100,14 @@ public final class CooldownScoreboard implements Listener {
             );
 
             player.sendMessage("§cScoreboard został wyłączony.");
+
+            updateTalismans();
         }
     }
+
+    // ==========================================
+    // TWORZENIE SCOREBOARDA
+    // ==========================================
 
     private void createBoard(Player player) {
         UUID uuid = player.getUniqueId();
@@ -145,7 +158,12 @@ public final class CooldownScoreboard implements Listener {
         player.setScoreboard(board);
 
         updatePlayer(player);
+        updateTalismans();
     }
+
+    // ==========================================
+    // AKTUALIZACJA WSZYSTKICH GRACZY
+    // ==========================================
 
     private void updateAll() {
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -163,6 +181,10 @@ public final class CooldownScoreboard implements Listener {
         }
     }
 
+    // ==========================================
+    // AKTUALIZACJA LINII SCOREBOARDA
+    // ==========================================
+
     private void updatePlayer(Player player) {
         UUID uuid = player.getUniqueId();
 
@@ -178,6 +200,7 @@ public final class CooldownScoreboard implements Listener {
 
         if (player.getScoreboard() != data.board) {
             player.setScoreboard(data.board);
+            updateTalismans();
         }
 
         long now = System.currentTimeMillis();
@@ -255,6 +278,28 @@ public final class CooldownScoreboard implements Listener {
         }
     }
 
+    // ==========================================
+    // AKTUALIZACJA IKON TALIZMANÓW
+    // ==========================================
+
+    private void updateTalismans() {
+        if (!(plugin instanceof Main main)) {
+            return;
+        }
+
+        TalizmanyManager manager = main.getTalizmanyManager();
+
+        if (manager == null) {
+            return;
+        }
+
+        manager.updateAllIcons();
+    }
+
+    // ==========================================
+    // WEJŚCIE GRACZA
+    // ==========================================
+
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
@@ -269,15 +314,23 @@ public final class CooldownScoreboard implements Listener {
             }
 
             createBoard(player);
+            updateTalismans();
+
         }, 2L);
     }
 
+    // ==========================================
+    // ŚMIERĆ GRACZA
+    // ==========================================
+
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
-        // Cooldowny pozostają aktywne po śmierci.
-        // ItemCooldownManager nadal przechowuje ich właściwe czasy.
         updatePlayer(event.getEntity());
     }
+
+    // ==========================================
+    // WYJŚCIE GRACZA
+    // ==========================================
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
@@ -285,11 +338,14 @@ public final class CooldownScoreboard implements Listener {
 
         boards.remove(uuid);
         disabled.remove(uuid);
-
-        // Usuwamy wyłącznie lokalną kopię danych scoreboardu.
-        // ItemCooldownManager zachowuje cooldowny w pamięci i pliku.
         cooldowns.remove(uuid);
+
+        Bukkit.getScheduler().runTask(plugin, this::updateTalismans);
     }
+
+    // ==========================================
+    // WYŁĄCZANIE PLUGINU
+    // ==========================================
 
     public void shutdown() {
         task.cancel();
@@ -303,6 +359,10 @@ public final class CooldownScoreboard implements Listener {
         boards.clear();
         cooldowns.clear();
     }
+
+    // ==========================================
+    // DANE
+    // ==========================================
 
     private record CooldownEntry(
             String displayName,
