@@ -31,11 +31,10 @@ import java.util.UUID;
 public class Rozga implements Listener {
 
     private final JavaPlugin plugin;
-
     private final NamespacedKey rozgaKey;
     private final NamespacedKey temporaryHeadKey;
+    private final ItemCooldownManager cooldownManager;
 
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
     private final Map<UUID, ItemStack> savedHelmets = new HashMap<>();
 
     public Rozga(JavaPlugin plugin) {
@@ -43,6 +42,7 @@ public class Rozga implements Listener {
 
         this.rozgaKey = new NamespacedKey(plugin, "rozga");
         this.temporaryHeadKey = new NamespacedKey(plugin, "rozga_glowka");
+        this.cooldownManager = ((Main) plugin).getItemCooldownManager();
     }
 
     // SPRAWDZANIE RÓZGI
@@ -203,14 +203,9 @@ public class Rozga implements Listener {
             return;
         }
 
-        UUID attackerUUID = attacker.getUniqueId();
-
-        long now = System.currentTimeMillis();
-
         // SPRAWDZANIE COOLDOWNU
 
-        if (cooldowns.containsKey(attackerUUID)
-                && cooldowns.get(attackerUUID) > now) {
+        if (cooldownManager.isOnCooldown(attacker, "rozga")) {
 
             attacker.sendActionBar(
                     Component.text(
@@ -254,10 +249,23 @@ public class Rozga implements Listener {
             return;
         }
 
-        // COOLDOWN 120 SEKUND
+        // ROZPOCZĘCIE COOLDOWNU 120 SEKUND
 
-        cooldowns.put(attackerUUID, now + 120_000);
-        ((Main) plugin).getCooldownScoreboard().startCooldown(attacker, "rozga", "&7&lRózga", 120_000L);
+        if (!cooldownManager.tryStartCooldown(
+                attacker,
+                "rozga",
+                "&7&lRózga",
+                120_000L
+        )) {
+            attacker.sendActionBar(
+                    Component.text(
+                            "Rózga jest na cooldownie!",
+                            NamedTextColor.RED
+                    )
+            );
+
+            return;
+        }
 
         // ZAPISANIE ORYGINALNEGO HEŁMU
 
@@ -321,16 +329,12 @@ public class Rozga implements Listener {
             return;
         }
 
-        // BLOKOWANIE KLIKNIĘCIA W SLOT HEŁMU
-
         if (event.getView().getType() == InventoryType.CRAFTING
                 && event.getRawSlot() == 5) {
 
             event.setCancelled(true);
             return;
         }
-
-        // BLOKOWANIE ZAKŁADANIA HEŁMU PRZEZ SHIFT-CLICK
 
         if (event.isShiftClick()
                 && isHeadItem(event.getCurrentItem())) {
@@ -374,7 +378,6 @@ public class Rozga implements Listener {
 
         if (action != Action.RIGHT_CLICK_AIR
                 && action != Action.RIGHT_CLICK_BLOCK) {
-
             return;
         }
 
@@ -400,11 +403,7 @@ public class Rozga implements Listener {
 
         ItemStack originalHelmet = savedHelmets.remove(uuid);
 
-        // USUNIĘCIE TYMCZASOWEJ GŁÓWKI Z DROPU
-
         event.getDrops().removeIf(this::isTemporaryHead);
-
-        // WYRZUCENIE ORYGINALNEGO HEŁMU
 
         event.getDrops().add(originalHelmet);
 
@@ -420,12 +419,7 @@ public class Rozga implements Listener {
 
         Player player = event.getPlayer();
 
-        // PRZYWRÓCENIE ORYGINALNEGO HEŁMU
-
         restoreHelmet(player);
 
-        // USUNIĘCIE COOLDOWNU
-
-        cooldowns.remove(player.getUniqueId());
     }
 }
