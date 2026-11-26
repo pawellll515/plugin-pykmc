@@ -31,13 +31,14 @@ import java.util.*;
 public class ZlamaneSerce implements Listener {
 
     private final JavaPlugin plugin;
+    private final ItemCooldownManager cooldownManager;
     private final NamespacedKey itemKey;
-
-    // Cooldown używającego gracza
-    private final Set<UUID> cooldowns = new HashSet<>();
 
     // Blokada pereł: UUID gracza -> pozostałe sekundy
     private final Map<UUID, Integer> pearlBlocks = new HashMap<>();
+
+    // Ochrona przed kolejnym Złamanym Sercem: UUID -> koniec ochrony
+    private final Map<UUID, Long> protectionCooldowns = new HashMap<>();
 
     // Kupidyni: UUID Vexa -> UUID wybranego celu
     private final Map<UUID, UUID> cupids = new HashMap<>();
@@ -45,8 +46,12 @@ public class ZlamaneSerce implements Listener {
     // Czas zniknięcia Kupidyna
     private final Map<UUID, Long> cupidExpiry = new HashMap<>();
 
+    private static final long COOLDOWN = 45_000L;
+    private static final long PROTECTION_TIME = 45_000L;
+
     public ZlamaneSerce(JavaPlugin plugin) {
         this.plugin = plugin;
+        this.cooldownManager = ((Main) plugin).getItemCooldownManager();
         this.itemKey = new NamespacedKey(plugin, "zlamane_serce");
 
         Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -76,7 +81,7 @@ public class ZlamaneSerce implements Listener {
                 ),
                 "",
                 ChatColor.translateAlternateColorCodes(
-                        '&', "&7Cooldown: &e1 minuta 30 sekund"
+                        '&', "&7Cooldown: &e45 sekund"
                 )
         ));
 
@@ -109,6 +114,27 @@ public class ZlamaneSerce implements Listener {
     }
 
     // =====================================================
+    // SPRAWDZANIE OCHRONY PRZECIWNIKA
+    // =====================================================
+
+    private boolean hasProtection(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        Long expiry = protectionCooldowns.get(uuid);
+
+        if (expiry == null) {
+            return false;
+        }
+
+        if (System.currentTimeMillis() >= expiry) {
+            protectionCooldowns.remove(uuid);
+            return false;
+        }
+
+        return true;
+    }
+
+    // =====================================================
     // UŻYCIE PRZEDMIOTU NA GRACZU
     // =====================================================
 
@@ -134,9 +160,9 @@ public class ZlamaneSerce implements Listener {
             return;
         }
 
-        if (cooldowns.contains(attacker.getUniqueId())) {
+        if (hasProtection(target)) {
             attacker.sendActionBar(Component.text(
-                    ChatColor.RED + "Złamane Serce jest na cooldownie!"
+                    ChatColor.RED + "Ten gracz jest odporny na Złamane Serce!"
             ));
             return;
         }
@@ -148,9 +174,23 @@ public class ZlamaneSerce implements Listener {
             return;
         }
 
-        // Cooldown 90 sekund
-        cooldowns.add(attacker.getUniqueId());
-        ((Main) plugin).getCooldownScoreboard().startCooldown(attacker, "zlamane", "&c&lZłamane Serce", 90_000L);
+        if (!cooldownManager.tryStartCooldown(
+                attacker,
+                "zlamane",
+                "&c&lZłamane Serce",
+                COOLDOWN
+        )) {
+            attacker.sendActionBar(Component.text(
+                    ChatColor.RED + "Złamane Serce jest na cooldownie!"
+            ));
+            return;
+        }
+
+        // Ochrona przeciwnika przed kolejnym Złamanym Sercem na 45 sekund
+        protectionCooldowns.put(
+                target.getUniqueId(),
+                System.currentTimeMillis() + PROTECTION_TIME
+        );
 
         // Blokada pereł na 10 sekund
         pearlBlocks.put(target.getUniqueId(), 10);
@@ -168,11 +208,6 @@ public class ZlamaneSerce implements Listener {
 
         // Przywołanie Kupidynów
         spawnCupids(target);
-
-        // Koniec cooldownu po 90 sekundach
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            cooldowns.remove(attacker.getUniqueId());
-        }, 90 * 20L);
     }
 
     // =====================================================
@@ -242,14 +277,12 @@ public class ZlamaneSerce implements Listener {
             vex.setPersistent(false);
             vex.setRemoveWhenFarAway(false);
 
-            // Każdy Kupidyn ma przypisany tylko jeden cel
             vex.setTarget(target);
 
             UUID vexId = vex.getUniqueId();
 
             cupids.put(vexId, target.getUniqueId());
 
-            // Każdy Kupidyn znika po własnych 30 sekundach
             cupidExpiry.put(
                     vexId,
                     System.currentTimeMillis() + 30_000L
@@ -283,7 +316,6 @@ public class ZlamaneSerce implements Listener {
 
                     Player target = Bukkit.getPlayer(targetId);
 
-                    // Cel nie istnieje, umarł lub wyszedł z serwera
                     if (target == null || !target.isOnline() || target.isDead()) {
                         vex.remove();
                         cupidExpiry.remove(vexId);
@@ -293,7 +325,6 @@ public class ZlamaneSerce implements Listener {
 
                     Long expiry = cupidExpiry.get(vexId);
 
-                    // Minęło 30 sekund
                     if (expiry == null
                             || System.currentTimeMillis() >= expiry) {
                         vex.remove();
@@ -302,12 +333,10 @@ public class ZlamaneSerce implements Listener {
                         continue;
                     }
 
-                    // Jeśli cel zmienił świat, Kupidyn podąża za nim
                     if (!target.getWorld().equals(vex.getWorld())) {
                         vex.teleport(target.getLocation());
                     }
 
-                    // Przywracanie właściwego celu
                     if (vex.getTarget() == null
                             || !vex.getTarget().getUniqueId().equals(targetId)) {
                         vex.setTarget(target);
@@ -355,28 +384,24 @@ public class ZlamaneSerce implements Listener {
             return;
         }
 
-        // Kupidyn nie może zranić nikogo poza swoim celem
         if (!(event.getEntity() instanceof Player victim)
                 || !victim.getUniqueId().equals(targetId)) {
             event.setCancelled(true);
             return;
         }
 
-        // Zatrzymujemy zwykłe obrażenia Vexa
         event.setCancelled(true);
 
         if (victim.isDead()) {
             return;
         }
 
-        // 1 punkt zdrowia = 0,5 serca
-        // Bezpośrednia zmiana zdrowia omija redukcję pancerza.
         double newHealth = Math.max(0.0, victim.getHealth() - 1.0);
         victim.setHealth(newHealth);
     }
 
     // =====================================================
-    // ODLiczanie BLOKADY PEREŁ
+    // ODLICZANIE BLOKADY PEREŁ
     // =====================================================
 
     private void startPearlBlockTask() {
@@ -423,7 +448,6 @@ public class ZlamaneSerce implements Listener {
 
         UUID playerId = player.getUniqueId();
 
-        cooldowns.remove(playerId);
         pearlBlocks.remove(playerId);
 
         removeCupidsFor(playerId);
@@ -437,7 +461,6 @@ public class ZlamaneSerce implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
 
-        cooldowns.remove(playerId);
         pearlBlocks.remove(playerId);
 
         removeCupidsFor(playerId);
@@ -484,7 +507,7 @@ public class ZlamaneSerce implements Listener {
 
         cupids.clear();
         cupidExpiry.clear();
-        cooldowns.clear();
         pearlBlocks.clear();
+        protectionCooldowns.clear();
     }
 }
