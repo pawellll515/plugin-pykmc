@@ -9,26 +9,21 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 public class Glodomiot implements Listener {
 
     private final JavaPlugin plugin;
     private final NamespacedKey glodomiotKey;
-
-    private final Map<UUID, Long> cooldowns = new HashMap<>();
+    private final ItemCooldownManager cooldownManager;
 
     public Glodomiot(JavaPlugin plugin) {
         this.plugin = plugin;
         this.glodomiotKey = new NamespacedKey(plugin, "glodomiot");
+        this.cooldownManager = ((Main) plugin).getItemCooldownManager();
     }
 
     private boolean isGlodomiot(ItemStack item) {
@@ -66,21 +61,18 @@ public class Glodomiot implements Listener {
             return;
         }
 
-        UUID uuid = attacker.getUniqueId();
-        long now = System.currentTimeMillis();
-
-        if (cooldowns.containsKey(uuid)
-                && cooldowns.get(uuid) > now) {
-
+        if (!cooldownManager.tryStartCooldown(
+                attacker,
+                "glodomiot",
+                "&6&lGłodomiot",
+                90_000L
+        )) {
             attacker.sendActionBar(
                     Component.text("§cGłodomiot na cooldownie!")
             );
 
             return;
         }
-
-        cooldowns.put(uuid, now + 90_000);
-        ((Main) plugin).getCooldownScoreboard().startCooldown(attacker, "glodomiot", "&6&lGłodomiot", 90_000L);
 
         // Informacje dla graczy
         attacker.sendActionBar(
@@ -94,10 +86,5 @@ public class Glodomiot implements Listener {
         // Natychmiastowe wyzerowanie głodu
         victim.setFoodLevel(0);
         victim.setSaturation(0);
-    }
-
-    @EventHandler
-    public void onQuit(PlayerQuitEvent event) {
-        cooldowns.remove(event.getPlayer().getUniqueId());
     }
 }
