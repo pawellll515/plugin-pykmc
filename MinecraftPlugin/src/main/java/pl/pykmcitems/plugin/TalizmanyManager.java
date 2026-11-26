@@ -256,11 +256,11 @@ public final class TalizmanyManager implements Listener {
     private String getIcon(String id) {
         if (id == null) return "";
 
-        if (id.startsWith("odpornosc_")) return "🛡️";
-        if (id.startsWith("sila_")) return "⚔";
-        if (id.equals("slodkosci_3")) return "🍬";
-        if (id.equals("drop")) return "✉";
-        if (id.equals("swiateczny_czas")) return "❄";
+        if (id.startsWith("odpornosc_")) return "&b🛡";
+        if (id.startsWith("sila_")) return "&d⚔";
+        if (id.equals("slodkosci_3")) return "&b🍬";
+        if (id.equals("drop")) return "&b✉";
+        if (id.equals("swiateczny_czas")) return "&f❄";
 
         return "";
     }
