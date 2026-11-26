@@ -21,6 +21,7 @@ public class Main extends JavaPlugin {
     private TalizmanyGUI talizmanyGUI;
     private TalizmanyManager talizmanyManager;
     private PowiekszonyEnderChest powiekszonyEnderChest;
+    private TalizmanySmierc talizmanySmierc;
 
     @Override
     public void onEnable() {
@@ -77,8 +78,6 @@ public class Main extends JavaPlugin {
                 this
         );
 
-        talizmanyManager.updateAllIcons();
-
         // BONUSY TALIZMANÓW
         TalizmanBonusy talizmanBonusy =
                 new TalizmanBonusy(this, talizmanyManager);
@@ -95,13 +94,20 @@ public class Main extends JavaPlugin {
                 powiekszonyEnderChest,
                 this
         );
-        TalizmanySmierc talizmanySmierc =
-        new TalizmanySmierc(talizmanyManager, powiekszonyEnderChest);
+
+        // OBSŁUGA ŚMIERCI I TALIZMANU DROP
+        talizmanySmierc = new TalizmanySmierc(
+                talizmanyManager,
+                powiekszonyEnderChest
+        );
 
         getServer().getPluginManager().registerEvents(
-        talizmanySmierc,
-        this
+                talizmanySmierc,
+                this
         );
+
+        // Aktualizacja ikon talizmanów nad głowami graczy
+        talizmanyManager.updateAllIcons();
 
         getLogger().info("PykMCItems zostal wlaczony!");
     }
