@@ -165,16 +165,17 @@ public class Itemy {
 
         List<Component> lore = new ArrayList<>();
 
+        lore.add(tekst("Po kliknięciu prawym, tworzy sie obszar", NamedTextColor.GRAY));
         lore.add(Component.text()
-                .append(tekst("Po ", NamedTextColor.GRAY))
-                .append(tekst("PPM", NamedTextColor.GREEN))
-                .append(tekst(" zabiera każdemu w obrębie ", NamedTextColor.GRAY))
-                .append(tekst("4 kratek", NamedTextColor.YELLOW))
+                .append(tekst("w którym gracze tracą ", NamedTextColor.GRAY))
+                .append(tekst("serca", NamedTextColor.RED))
                 .build());
-
-        lore.add(tekst("33% życia", NamedTextColor.YELLOW));
+        lore.add(tekst("", NamedTextColor.YELLOW));
         lore.add(Component.empty());
-        lore.add(tekst("Cooldown: 1 minuta 30 sekund", NamedTextColor.GRAY));
+        lore.add(Component.text()
+                .append(tekst("Cooldown: ", NamedTextColor.GRAY))
+                .append(tekst("60s", NamedTextColor.YELLOW))
+                .build());
 
         meta.lore(lore);
         meta.setCustomModelData(3);
@@ -231,28 +232,36 @@ public class Itemy {
 
         List<Component> lore = new ArrayList<>();
 
+        lore.add(Component.empty());
+        
+        lore.add(tekst("Każde Twoje uderzenie zadaje drugiego sweepa,", NamedTextColor.GRAY));
         lore.add(Component.text()
-                .append(tekst("Po ", NamedTextColor.GRAY))
-                .append(tekst("PPM + SHIFT", NamedTextColor.GREEN))
-                .append(tekst(" na gracza", NamedTextColor.GRAY))
+                .append(tekst("który zadaje ", NamedTextColor.GRAY))
+                .append(tekst("8% ", NamedTextColor.RED))
+                .append(tekst("uderzenia", NamedTextColor.GRAY))
                 .build());
-
+        
+        lore.add(Component.empty());
+        
         lore.add(Component.text()
-                .append(tekst("teleportuje cię ", NamedTextColor.GRAY))
-                .append(tekst("2 bloki", NamedTextColor.AQUA))
-                .append(tekst(" za cel", NamedTextColor.GRAY))
+                .append(tekst("Klikając ", NamedTextColor.GRAY))
+                .append(tekst("SHIFT + PRAWY ", NamedTextColor.YELLOW))
+                .append(tekst("robisz ", NamedTextColor.GRAY))
+                .append(tekst("wyrafinowany krok ", NamedTextColor.YELLOW))
                 .build());
-
+        lore.add(tekst("który przecina przeciwników zadając", NamedTextColor.GRAY));
         lore.add(Component.text()
-                .append(tekst("i zamraża go, zadając ", NamedTextColor.GRAY))
-                .append(tekst("4 serca", NamedTextColor.RED))
+                .append(tekst("im obrażenia oraz efekt ", NamedTextColor.GRAY))
+                .append(tekst("zamrożenia ", NamedTextColor.TURQUOISE))
+                .append(tekst("na ", NamedTextColor.GRAY))
+                .append(tekst("2s ", NamedTextColor.YELLOW))
                 .build());
 
         lore.add(Component.empty());
 
         lore.add(Component.text()
                 .append(tekst("Cooldown: ", NamedTextColor.GRAY))
-                .append(tekst("1 minuta 30 sekund", NamedTextColor.GREEN))
+                .append(tekst("40s", NamedTextColor.YELLOW))
                 .build());
 
         meta.lore(lore);
@@ -262,7 +271,6 @@ public class Itemy {
         meta.addEnchant(Enchantment.FIRE_ASPECT, 3, true);
         meta.addEnchant(Enchantment.UNBREAKING, 4, true);
 
-        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "katana"),
@@ -483,27 +491,27 @@ public class Itemy {
 
         List<Component> lore = new ArrayList<>();
 
+        lore.add(Component.empty());
         lore.add(Component.text()
-                .append(tekst("Po ", NamedTextColor.GRAY))
-                .append(tekst("PPM", NamedTextColor.GREEN))
-                .append(tekst(" blokuje przeciwnikowi perły", NamedTextColor.GRAY))
+                .append(tekst("Kliknij prawym myszki na wroga, ", NamedTextColor.GRAY))
                 .build());
 
         lore.add(Component.text()
+                .append(tekst("aby nasłać na niego ", NamedTextColor.GRAY))
+                .append(tekst("5 potężnych kupidynów", NamedTextColor.YELLOW))
+                .build());
+        lore.add(Component.text()
+                .append(tekst("oraz ", NamedTextColor.GRAY))
+                .append(tekst("zablokować mu używanie pereł ", NamedTextColor.RED))
                 .append(tekst("na ", NamedTextColor.GRAY))
-                .append(tekst("10 sekund", NamedTextColor.YELLOW))
-                .build());
-
-        lore.add(Component.text()
-                .append(tekst("oraz przywołuje ", NamedTextColor.GRAY))
-                .append(tekst("5 Kupidynów", NamedTextColor.RED))
+                .append(tekst("10s ", NamedTextColor.YELLOW))
                 .build());
 
         lore.add(Component.empty());
 
         lore.add(Component.text()
                 .append(tekst("Cooldown: ", NamedTextColor.GRAY))
-                .append(tekst("1 minuta 30 sekund", NamedTextColor.YELLOW))
+                .append(tekst("45s", NamedTextColor.YELLOW))
                 .build());
 
         meta.lore(lore);
