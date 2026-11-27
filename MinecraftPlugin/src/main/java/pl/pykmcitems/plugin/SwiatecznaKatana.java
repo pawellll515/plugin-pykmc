@@ -43,8 +43,6 @@ public class SwiatecznaKatana implements Listener {
     private static final double TELEPORT_DISTANCE = 5.0;
     private static final double SWEEP_RADIUS = 2.5;
     private static final double SWEEP_DAMAGE_PERCENT = 0.08;
-
-    // 40 ticków = 2 sekundy.
     private static final int FREEZE_TICKS = 40;
 
     private final JavaPlugin plugin;
@@ -92,7 +90,6 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
-        // Sprawdzamy, czy kliknięta ręka trzyma katanę.
         EquipmentSlot hand = event.getHand();
 
         if (hand == null) {
@@ -111,7 +108,6 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
-        // Na cooldownie nie anulujemy kliknięcia.
         if (cooldownManager.isOnCooldown(player, "katana")) {
             return;
         }
@@ -155,7 +151,6 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
-        // Trzy dźwięki sweep.
         for (int i = 0; i < 3; i++) {
             final int delay = i * 3;
 
@@ -188,8 +183,51 @@ public class SwiatecznaKatana implements Listener {
         }
     }
 
-    // Szukanie miejsca teleportacji z uwzględnieniem hitboxu gracza.
-    // Jeśli dolna część hitboxu wejdzie w blok, próbujemy podnieść gracza nad blok.
+    // Oblicza, o ile trzeba podnieść gracza, aby ominąć kolidujące bloki.
+    private double getRequiredRaise(World world, BoundingBox box) {
+
+        double requiredRaise = 0.0;
+
+        int minX = (int) Math.floor(box.getMinX());
+        int minY = (int) Math.floor(box.getMinY());
+        int minZ = (int) Math.floor(box.getMinZ());
+
+        int maxX = (int) Math.floor(box.getMaxX());
+        int maxY = (int) Math.floor(box.getMaxY());
+        int maxZ = (int) Math.floor(box.getMaxZ());
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+
+                    Block block = world.getBlockAt(x, y, z);
+
+                    if (!block.getType().isSolid()) {
+                        continue;
+                    }
+
+                    BoundingBox blockBox = block.getBoundingBox();
+
+                    if (!blockBox.overlaps(box)) {
+                        continue;
+                    }
+
+                    double raise = blockBox.getMaxY()
+                            - box.getMinY()
+                            + 0.02;
+
+                    requiredRaise = Math.max(
+                            requiredRaise,
+                            raise
+                    );
+                }
+            }
+        }
+
+        return requiredRaise;
+    }
+
+    // Szukanie miejsca teleportacji z uwzględnieniem hitboxu.
     private TeleportResult findTeleportDestination(
             Player player,
             Vector direction
@@ -202,7 +240,7 @@ public class SwiatecznaKatana implements Listener {
         World world = player.getWorld();
 
         for (double distance = step;
-             distance <= TELEPORT_DISTANCE;
+             distance <= TELEPORT_DISTANCE + 0.0001;
              distance += step) {
 
             Location candidate = originalLocation.clone()
@@ -215,64 +253,21 @@ public class SwiatecznaKatana implements Listener {
                     .clone()
                     .shift(movement);
 
+            // Jeśli miejsce jest wolne, zapamiętujemy odległość.
             if (isSafeDestination(world, movedBox)) {
                 lastSafeDistance = distance;
                 continue;
             }
 
-            // Sprawdzamy, czy kolizja dotyczy dolnej części hitboxu.
-            BoundingBox lowerBox = new BoundingBox(
-                    movedBox.getMinX(),
-                    movedBox.getMinY(),
-                    movedBox.getMinZ(),
-                    movedBox.getMaxX(),
-                    Math.min(movedBox.getMaxY(), movedBox.getMinY() + 0.9),
-                    movedBox.getMaxZ()
-            );
+            // Wykryto kolizję. Obliczamy wysokość potrzebną do ominięcia bloku.
+            double requiredRaise = getRequiredRaise(world, movedBox);
 
-            double requiredRaise = 0.0;
-
-            int minX = (int) Math.floor(lowerBox.getMinX());
-            int minY = (int) Math.floor(lowerBox.getMinY());
-            int minZ = (int) Math.floor(lowerBox.getMinZ());
-
-            int maxX = (int) Math.floor(lowerBox.getMaxX());
-            int maxY = (int) Math.floor(lowerBox.getMaxY());
-            int maxZ = (int) Math.floor(lowerBox.getMaxZ());
-
-            for (int x = minX; x <= maxX; x++) {
-                for (int y = minY; y <= maxY; y++) {
-                    for (int z = minZ; z <= maxZ; z++) {
-
-                        Block block = world.getBlockAt(x, y, z);
-
-                        if (!block.getType().isSolid()) {
-                            continue;
-                        }
-
-                        BoundingBox blockBox = block.getBoundingBox();
-
-                        if (blockBox.overlaps(lowerBox)) {
-                            double raise = blockBox.getMaxY()
-                                    - movedBox.getMinY()
-                                    + 0.02;
-
-                            requiredRaise = Math.max(
-                                    requiredRaise,
-                                    raise
-                            );
-                        }
-                    }
-                }
-            }
-
-            // Jeśli dolna część hitboxu weszła w blok,
-            // próbujemy przenieść gracza nad ten blok.
             if (requiredRaise > 0.0) {
 
                 BoundingBox raisedBox = movedBox.clone()
                         .shift(0, requiredRaise, 0);
 
+                // Jeśli nad blokiem jest wolne miejsce, teleportujemy gracza nad niego.
                 if (isSafeDestination(world, raisedBox)) {
 
                     Location raisedDestination = candidate.clone()
@@ -285,19 +280,13 @@ public class SwiatecznaKatana implements Listener {
                 }
             }
 
-            // Jeśli nie da się bezpiecznie podnieść gracza,
-            // zatrzymujemy teleportację w ostatnim bezpiecznym miejscu.
-            double safeDistance = Math.max(
-                    0.0,
-                    lastSafeDistance - 1.0
-            );
-
+            // Nie odejmujemy już 1 bloku od ostatniej bezpiecznej odległości.
             Location safeDestination = originalLocation.clone()
-                    .add(direction.clone().multiply(safeDistance));
+                    .add(direction.clone().multiply(lastSafeDistance));
 
             return new TeleportResult(
                     safeDestination,
-                    safeDistance
+                    lastSafeDistance
             );
         }
 
@@ -343,7 +332,6 @@ public class SwiatecznaKatana implements Listener {
         return true;
     }
 
-    // Pobieranie obrażeń aktualnej broni z mainhandu.
     private double getWeaponDamage(Player player) {
 
         AttributeInstance attribute = player.getAttribute(
@@ -416,8 +404,6 @@ public class SwiatecznaKatana implements Listener {
             }
 
             zamrozGracza(target);
-
-            // Obrażenia przypisane do gracza używającego katany.
             target.damage(abilityDamage, user);
         }
     }
@@ -478,15 +464,13 @@ public class SwiatecznaKatana implements Listener {
                 1.2f
         );
 
-        // Zwiększamy obrażenia tego samego uderzenia o 8%.
-        // Nie wykonujemy drugiego victim.damage(), żeby nie stackować hitów.
+        // Dodatkowe 8% w ramach tego samego uderzenia.
         event.setDamage(originalDamage + sweepDamage);
 
         sweepProcessing.add(attackerUUID);
 
         try {
 
-            // Dodatkowe obrażenia dla pozostałych graczy.
             for (Entity entity : victim.getNearbyEntities(
                     SWEEP_RADIUS,
                     SWEEP_RADIUS,
