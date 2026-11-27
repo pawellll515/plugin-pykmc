@@ -74,12 +74,14 @@ public class ZlamaneSerce implements Listener {
 
         meta.setLore(Arrays.asList(
                 ChatColor.translateAlternateColorCodes(
-                        '&', "&7Po &aPPM &cblokuje &7przeciwnikowi perły na &e10 sekund"
+                        '&', "&7Po naciśnięciu prawym na wroga,"
                 ),
                 ChatColor.translateAlternateColorCodes(
-                        '&', "&7oraz przywołuje &c5 kupidynów &7którzy go biją"
+                        '&', "&cblokuje mu perły &7na &e10s"
                 ),
-                "",
+                ChatColor.translateAlternateColorCodes(
+                        '&', "&7oraz przywołuje &d5 krwiożerczych kupidynów"
+                ),
                 ChatColor.translateAlternateColorCodes(
                         '&', "&7Cooldown: &e45 sekund"
                 )
