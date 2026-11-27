@@ -73,13 +73,9 @@ public class SwiatecznaKatana implements Listener {
                 || isKatana(player.getInventory().getItemInOffHand());
     }
 
-    // SHIFT + PRAWY KLIK
+    // SHIFT + PRAWY KLIK - MAINHAND I OFFHAND
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-
-        if (event.getHand() != EquipmentSlot.HAND) {
-            return;
-        }
 
         if (event.getAction() != Action.RIGHT_CLICK_AIR
                 && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
@@ -88,11 +84,30 @@ public class SwiatecznaKatana implements Listener {
 
         Player player = event.getPlayer();
 
-        if (!player.isSneaking() || !hasKatana(player)) {
-        return;
+        if (!player.isSneaking()) {
+            return;
         }
 
-        // Jeśli katana jest na cooldownie, nie rób absolutnie nic.
+        // Sprawdzamy, czy kliknięta ręka trzyma katanę.
+        EquipmentSlot hand = event.getHand();
+
+        if (hand == null) {
+            return;
+        }
+
+        ItemStack usedItem;
+
+        if (hand == EquipmentSlot.HAND) {
+            usedItem = player.getInventory().getItemInMainHand();
+        } else {
+            usedItem = player.getInventory().getItemInOffHand();
+        }
+
+        if (!isKatana(usedItem)) {
+            return;
+        }
+
+        // Na cooldownie nie anulujemy kliknięcia i nic nie robimy.
         if (cooldownManager.isOnCooldown(player, "katana")) {
             return;
         }
@@ -105,8 +120,7 @@ public class SwiatecznaKatana implements Listener {
         Vector direction = eyeLocation.getDirection().normalize();
 
         double travelDistance = findTravelDistance(
-                world,
-                eyeLocation,
+                player,
                 direction
         );
 
@@ -159,45 +173,72 @@ public class SwiatecznaKatana implements Listener {
         ));
     }
 
-    // Wyszukiwanie pełnego bloku na trasie.
+    // Sprawdzanie bezpiecznej odległości teleportacji.
     private double findTravelDistance(
-            World world,
-            Location start,
+            Player player,
             Vector direction
     ) {
 
         double step = 0.05;
+        double lastSafeDistance = 0.0;
+
+        Location originalLocation = player.getLocation();
 
         for (double distance = step;
              distance <= TELEPORT_DISTANCE;
              distance += step) {
 
-            Location point = start.clone().add(
-                    direction.clone().multiply(distance)
-            );
+            Location candidate = originalLocation.clone()
+                    .add(direction.clone().multiply(distance));
 
-            Block block = point.getBlock();
+            Vector movement = candidate.toVector()
+                    .subtract(originalLocation.toVector());
 
-            if (isFullSolidBlock(block)) {
-                return Math.max(0.0, distance - 1.0);
+            BoundingBox movedBox = player.getBoundingBox()
+                    .clone()
+                    .shift(movement);
+
+            if (!isSafeDestination(player.getWorld(), movedBox)) {
+                return Math.max(0.0, lastSafeDistance - 1.0);
+            }
+
+            lastSafeDistance = distance;
+        }
+
+        return lastSafeDistance;
+    }
+
+    // Sprawdzanie rzeczywistych hitboxów bloków.
+    private boolean isSafeDestination(World world, BoundingBox box) {
+
+        int minX = (int) Math.floor(box.getMinX());
+        int minY = (int) Math.floor(box.getMinY());
+        int minZ = (int) Math.floor(box.getMinZ());
+
+        int maxX = (int) Math.floor(box.getMaxX());
+        int maxY = (int) Math.floor(box.getMaxY());
+        int maxZ = (int) Math.floor(box.getMaxZ());
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+
+                    Block block = world.getBlockAt(x, y, z);
+
+                    if (!block.getType().isSolid()) {
+                        continue;
+                    }
+
+                    BoundingBox blockBox = block.getBoundingBox();
+
+                    if (blockBox.overlaps(box)) {
+                        return false;
+                    }
+                }
             }
         }
 
-        return TELEPORT_DISTANCE;
-    }
-
-    // Tylko pełne bloki zatrzymują teleportację.
-    private boolean isFullSolidBlock(Block block) {
-
-        if (block == null || !block.getType().isSolid()) {
-            return false;
-        }
-
-        BoundingBox box = block.getBoundingBox();
-
-        return box.getWidthX() >= 0.99
-                && box.getHeight() >= 0.99
-                && box.getWidthZ() >= 0.99;
+        return true;
     }
 
     // Śnieżne particles i zamrażanie graczy na trasie.
