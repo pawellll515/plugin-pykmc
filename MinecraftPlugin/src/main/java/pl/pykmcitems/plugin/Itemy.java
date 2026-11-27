@@ -252,7 +252,7 @@ public class Itemy {
         lore.add(tekst("który przecina przeciwników zadając", NamedTextColor.GRAY));
         lore.add(Component.text()
                 .append(tekst("im obrażenia oraz efekt ", NamedTextColor.GRAY))
-                .append(tekst("zamrożenia ", NamedTextColor.TURQUOISE))
+                .append(tekst("zamrożenia ", NamedTextColor.DARK_AQUA))
                 .append(tekst("na ", NamedTextColor.GRAY))
                 .append(tekst("2s ", NamedTextColor.YELLOW))
                 .build());
