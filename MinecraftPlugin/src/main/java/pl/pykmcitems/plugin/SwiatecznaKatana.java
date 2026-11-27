@@ -249,7 +249,8 @@ public class SwiatecznaKatana implements Listener {
                 true
         );
 
-        // Trafienie w górną powierzchnię bloku.
+        // Trafienie w górną powierzchnię bloku:
+        // próbujemy przenieść gracza na środek górnej powierzchni.
         if (rayTrace != null
                 && rayTrace.getHitBlock() != null
                 && rayTrace.getHitBlockFace() == BlockFace.UP) {
@@ -280,31 +281,52 @@ public class SwiatecznaKatana implements Listener {
             }
         }
 
-        // Dla boku i spodu wyznaczamy odległość od pozycji gracza,
-        // a nie od oczu. Zapobiega to przesunięciu o wysokość oczu.
+        /*
+         * Trafienie w bok/spód (albo brak poprawnego miejsca na górze):
+         * teleportujemy poziomo, zachowując aktualne Y gracza.
+         *
+         * Przesuwanie całego hitboxa w dół powodowało kolizję z podłożem,
+         * szczególnie gdy celownik był kilka pikseli pod górną krawędzią bloku.
+         */
+        Vector horizontalDirection = new Vector(
+                normalizedDirection.getX(),
+                0.0,
+                normalizedDirection.getZ()
+        );
+
+        if (horizontalDirection.lengthSquared() >= 1.0E-8) {
+            horizontalDirection.normalize();
+        }
+
         double maxDistance = TELEPORT_DISTANCE;
 
         if (rayTrace != null && rayTrace.getHitPosition() != null) {
             Vector toHit = rayTrace.getHitPosition().clone()
-                    .subtract(originalLocation.toVector());
+                    .subtract(eyeLocation.toVector());
 
-            maxDistance = Math.max(0.0, Math.min(
-                    TELEPORT_DISTANCE,
-                    toHit.dot(normalizedDirection)
-            ));
+            // Odległość pozioma do punktu trafienia.
+            maxDistance = Math.max(
+                    0.0,
+                    Math.min(
+                            TELEPORT_DISTANCE,
+                            toHit.getX() * horizontalDirection.getX()
+                                    + toHit.getZ() * horizontalDirection.getZ()
+                    )
+            );
         }
 
-        // Szukamy od punktu trafienia w stronę gracza.
-        // Dzięki temu nawet przy trafieniu tuż przy górnej krawędzi
-        // znajdujemy ostatnią bezpieczną pozycję przed blokiem.
+        // Cofamy się od punktu trafienia, aż cały hitbox będzie bezpieczny.
+        // Wysokość gracza pozostaje niezmieniona.
         double step = 0.025;
 
         for (double distance = maxDistance;
-             distance >= 0.0;
+             distance >= -0.0001;
              distance -= step) {
 
+            double checkedDistance = Math.max(0.0, distance);
+
             Location candidate = originalLocation.clone()
-                    .add(normalizedDirection.clone().multiply(distance));
+                    .add(horizontalDirection.clone().multiply(checkedDistance));
 
             Vector movement = candidate.toVector()
                     .subtract(originalLocation.toVector());
@@ -314,7 +336,7 @@ public class SwiatecznaKatana implements Listener {
                     .shift(movement);
 
             if (isSafeDestination(world, movedBox)) {
-                return new TeleportResult(candidate, distance);
+                return new TeleportResult(candidate, checkedDistance);
             }
         }
 
