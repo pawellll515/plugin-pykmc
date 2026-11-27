@@ -10,7 +10,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -82,6 +81,20 @@ public final class CooldownScoreboard implements Listener {
     }
 
     // ==========================================
+    // RESET WSZYSTKICH COOLDOWNÓW GRACZA
+    // ==========================================
+
+    public void clearCooldowns(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        cooldowns.remove(uuid);
+
+        if (player.isOnline() && !disabled.contains(uuid)) {
+            updatePlayer(player);
+        }
+    }
+
+    // ==========================================
     // WŁĄCZANIE / WYŁĄCZANIE SCOREBOARDA
     // ==========================================
 
@@ -125,7 +138,7 @@ public final class CooldownScoreboard implements Listener {
                 LEGACY.deserialize(
                         ChatColor.translateAlternateColorCodes(
                                 '&',
-                                "&e&lPyk&d&lMC &r&bPractice"
+                                "&bMeduza&fMC &eBETA"
                         )
                 )
         );
@@ -217,13 +230,16 @@ public final class CooldownScoreboard implements Listener {
 
         List<String> lines = new ArrayList<>();
 
+        lines.add("&e  Beta testy eventówek");
         lines.add("&7Komendy:");
         lines.add("&7/losuj-eve");
         lines.add("&7/losuj-zwoje");
+        lines.add("&7/losuj-talizmany");
         lines.add("&7/kit");
         lines.add(" ");
         lines.add("&7Wył. &escoreboard &e/sb");
         lines.add(" ");
+        lines.add("&eCooldowny:");
 
         List<CooldownEntry> active =
                 new ArrayList<>(playerCooldowns.values());
@@ -317,15 +333,6 @@ public final class CooldownScoreboard implements Listener {
             updateTalismans();
 
         }, 2L);
-    }
-
-    // ==========================================
-    // ŚMIERĆ GRACZA
-    // ==========================================
-
-    @EventHandler
-    public void onDeath(PlayerDeathEvent event) {
-        updatePlayer(event.getEntity());
     }
 
     // ==========================================
