@@ -4,7 +4,7 @@ package pl.pykmcitems.plugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-import org.bukkit.BoundingBox;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -19,14 +19,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
 import java.util.HashMap;
@@ -48,7 +49,6 @@ public class SwiatecznaKatana implements Listener {
 
     private final Map<UUID, BukkitRunnable> activeFreezes = new HashMap<>();
     private final Set<UUID> sweepProcessing = new HashSet<>();
-    private final Set<UUID> abilityDamage = new HashSet<>();
 
     public SwiatecznaKatana(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -140,7 +140,7 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
-        // Trzy dźwięki sweep podczas teleportacji.
+        // Trzy dźwięki sweep.
         for (int i = 0; i < 3; i++) {
             final int delay = i * 3;
 
@@ -199,7 +199,7 @@ public class SwiatecznaKatana implements Listener {
         BoundingBox box = block.getBoundingBox();
 
         return box.getWidthX() >= 0.99
-                && box.getWidthY() >= 0.99
+                && box.getHeight() >= 0.99
                 && box.getWidthZ() >= 0.99;
     }
 
@@ -254,7 +254,7 @@ public class SwiatecznaKatana implements Listener {
         }
 
         for (UUID uuid : playersOnPath) {
-            Player target = world.getPlayer(uuid);
+            Player target = Bukkit.getPlayer(uuid);
 
             if (target != null && target.isOnline() && !target.isDead()) {
                 zamrozGracza(target);
@@ -288,10 +288,6 @@ public class SwiatecznaKatana implements Listener {
 
         UUID attackerUUID = attacker.getUniqueId();
 
-        if (abilityDamage.contains(attackerUUID)) {
-            return;
-        }
-
         if (sweepProcessing.contains(attackerUUID)) {
             return;
         }
@@ -324,6 +320,12 @@ public class SwiatecznaKatana implements Listener {
         sweepProcessing.add(attackerUUID);
 
         try {
+            // Dodatkowe obrażenia dla pierwotnego celu.
+            if (victim.isOnline() && !victim.isDead()) {
+                victim.damage(sweepDamage, attacker);
+            }
+
+            // Dodatkowe obrażenia dla pozostałych graczy.
             for (Entity entity : victim.getNearbyEntities(
                     SWEEP_RADIUS,
                     SWEEP_RADIUS,
@@ -334,9 +336,7 @@ public class SwiatecznaKatana implements Listener {
                     continue;
                 }
 
-                // Nie bijemy atakującego.
-                // Pierwotny cel również otrzymuje dodatkowe obrażenia.
-                if (target.equals(attacker)) {
+                if (target.equals(attacker) || target.equals(victim)) {
                     continue;
                 }
 
@@ -408,7 +408,6 @@ public class SwiatecznaKatana implements Listener {
             freeze.cancel();
         }
 
-        abilityDamage.remove(uuid);
         sweepProcessing.remove(uuid);
     }
 
