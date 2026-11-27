@@ -89,18 +89,15 @@ public class SwiatecznaKatana implements Listener {
         Player player = event.getPlayer();
 
         if (!player.isSneaking() || !hasKatana(player)) {
+        return;
+        }
+
+        // Jeśli katana jest na cooldownie, nie rób absolutnie nic.
+        if (cooldownManager.isOnCooldown(player, "katana")) {
             return;
         }
 
         event.setCancelled(true);
-
-        if (cooldownManager.isOnCooldown(player, "katana")) {
-            player.sendActionBar(Component.text(
-                    "Świąteczna Katana jest na cooldownie!",
-                    NamedTextColor.RED
-            ));
-            return;
-        }
 
         World world = player.getWorld();
 
