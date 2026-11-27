@@ -4,38 +4,51 @@ package pl.pykmcitems.plugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-import org.bukkit.FluidCollisionMode;
+import org.bukkit.BoundingBox;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class SwiatecznaKatana implements Listener {
+
+    private static final double TELEPORT_DISTANCE = 5.0;
+    private static final double SWEEP_RADIUS = 2.5;
+    private static final double SWEEP_DAMAGE_PERCENT = 0.08;
+    private static final int FREEZE_TICKS = 60;
 
     private final JavaPlugin plugin;
     private final NamespacedKey katanaKey;
     private final ItemCooldownManager cooldownManager;
 
     private final Map<UUID, BukkitRunnable> activeFreezes = new HashMap<>();
+    private final Set<UUID> sweepProcessing = new HashSet<>();
+    private final Set<UUID> abilityDamage = new HashSet<>();
 
     public SwiatecznaKatana(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -44,12 +57,14 @@ public class SwiatecznaKatana implements Listener {
     }
 
     private boolean isKatana(ItemStack item) {
-        if (item == null || item.getType() != Material.NETHERITE_SWORD
+        if (item == null
+                || item.getType() != Material.NETHERITE_SWORD
                 || !item.hasItemMeta()) {
             return false;
         }
 
-        return item.getItemMeta().getPersistentDataContainer()
+        return item.getItemMeta()
+                .getPersistentDataContainer()
                 .has(katanaKey, PersistentDataType.BYTE);
     }
 
@@ -58,6 +73,7 @@ public class SwiatecznaKatana implements Listener {
                 || isKatana(player.getInventory().getItemInOffHand());
     }
 
+    // SHIFT + PRAWY KLIK
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
 
@@ -76,21 +92,8 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
-        RayTraceResult result = player.getWorld().rayTraceEntities(
-                player.getEyeLocation(),
-                player.getEyeLocation().getDirection(),
-                10.0,
-                1.5,
-                entity -> entity instanceof Player && entity != player
-        );
-
-        if (result == null || !(result.getHitEntity() instanceof Player target)) {
-            return;
-        }
-
         event.setCancelled(true);
 
-        // Sprawdzanie wspólnego cooldownu
         if (cooldownManager.isOnCooldown(player, "katana")) {
             player.sendActionBar(Component.text(
                     "Świąteczna Katana jest na cooldownie!",
@@ -99,142 +102,259 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
-        Location destination = getSafeTeleportLocation(player, target);
+        World world = player.getWorld();
 
-        if (destination == null) {
-            player.sendActionBar(Component.text(
-                    "Nie ma bezpiecznego miejsca do teleportacji!",
-                    NamedTextColor.RED
-            ));
-            return;
-        }
+        Location eyeLocation = player.getEyeLocation();
+        Vector direction = eyeLocation.getDirection().normalize();
+
+        double travelDistance = findTravelDistance(
+                world,
+                eyeLocation,
+                direction
+        );
+
+        Location destination = player.getLocation().clone()
+                .add(direction.clone().multiply(travelDistance));
+
+        destination.setYaw(player.getLocation().getYaw());
+        destination.setPitch(player.getLocation().getPitch());
+
+        showTeleportTrail(
+                world,
+                eyeLocation,
+                direction,
+                travelDistance,
+                player
+        );
 
         if (!player.teleport(destination)) {
             return;
         }
 
-        // Rozpoczęcie cooldownu dopiero po udanej teleportacji
         if (!cooldownManager.tryStartCooldown(
                 player,
                 "katana",
                 "&a&lŚwiąteczna Katana",
-                90_000L
+                40_000L
         )) {
             return;
         }
 
-        if (target.isOnline() && !target.isDead()) {
-            target.damage(8.0, player);
+        // Trzy dźwięki sweep podczas teleportacji.
+        for (int i = 0; i < 3; i++) {
+            final int delay = i * 3;
+
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    player.playSound(
+                            player.getLocation(),
+                            Sound.ENTITY_PLAYER_ATTACK_SWEEP,
+                            1.0f,
+                            1.0f
+                    );
+                }
+            }, delay);
         }
 
         player.sendActionBar(Component.text(
                 "Użyłeś Świątecznej Katany!",
                 NamedTextColor.GREEN
         ));
-
-        target.sendActionBar(Component.text(
-                "Zostałeś trafiony Świąteczną Kataną!",
-                NamedTextColor.RED
-        ));
-
-        zamrozGracza(target);
     }
 
-    private Location getBehindLocation(Player target, double distance) {
+    // Wyszukiwanie pełnego bloku na trasie.
+    private double findTravelDistance(
+            World world,
+            Location start,
+            Vector direction
+    ) {
 
-        Location location = target.getLocation().clone();
+        double step = 0.05;
 
-        double yaw = Math.toRadians(location.getYaw());
+        for (double distance = step;
+             distance <= TELEPORT_DISTANCE;
+             distance += step) {
 
-        double x = Math.sin(yaw) * distance;
-        double z = -Math.cos(yaw) * distance;
+            Location point = start.clone().add(
+                    direction.clone().multiply(distance)
+            );
 
-        location.add(x, 0, z);
+            Block block = point.getBlock();
 
-        return location;
-    }
-
-    private Location getSafeTeleportLocation(Player player, Player target) {
-
-        // Szukamy miejsca od 2 bloków do 0 bloków za przeciwnikiem.
-        for (double distance = 2.0; distance >= 0.0; distance -= 0.25) {
-
-            Location candidate = getBehindLocation(target, distance);
-
-            candidate.setYaw(player.getLocation().getYaw());
-            candidate.setPitch(player.getLocation().getPitch());
-
-            if (!isSafeLocation(player, candidate)) {
-                continue;
+            if (isFullSolidBlock(block)) {
+                return Math.max(0.0, distance - 1.0);
             }
-
-            if (!hasClearPath(player, candidate)) {
-                continue;
-            }
-
-            return candidate;
         }
 
-        return null;
+        return TELEPORT_DISTANCE;
     }
 
-    private boolean hasClearPath(Player player, Location destination) {
+    // Tylko pełne bloki zatrzymują teleportację.
+    private boolean isFullSolidBlock(Block block) {
 
-        World world = player.getWorld();
-
-        Location start = player.getLocation().clone().add(0, 1, 0);
-        Location end = destination.clone().add(0, 1, 0);
-
-        Vector direction = end.toVector().subtract(start.toVector());
-        double distance = direction.length();
-
-        if (distance <= 0.1) {
-            return true;
+        if (block == null || !block.getType().isSolid()) {
+            return false;
         }
 
-        RayTraceResult result = world.rayTraceBlocks(
-                start,
-                direction.normalize(),
-                distance,
-                FluidCollisionMode.NEVER,
-                true
+        BoundingBox box = block.getBoundingBox();
+
+        return box.getWidthX() >= 0.99
+                && box.getWidthY() >= 0.99
+                && box.getWidthZ() >= 0.99;
+    }
+
+    // Śnieżne particles i zamrażanie graczy na trasie.
+    private void showTeleportTrail(
+            World world,
+            Location start,
+            Vector direction,
+            double distance,
+            Player user
+    ) {
+
+        Set<UUID> playersOnPath = new HashSet<>();
+
+        double step = 0.25;
+
+        for (double current = 0.0;
+             current <= distance;
+             current += step) {
+
+            Location point = start.clone().add(
+                    direction.clone().multiply(current)
+            );
+
+            world.spawnParticle(
+                    Particle.SNOWFLAKE,
+                    point,
+                    3,
+                    0.15,
+                    0.15,
+                    0.15,
+                    0.01
+            );
+
+            for (Entity entity : world.getNearbyEntities(
+                    point,
+                    0.8,
+                    1.0,
+                    0.8
+            )) {
+
+                if (!(entity instanceof Player target)) {
+                    continue;
+                }
+
+                if (target.equals(user)) {
+                    continue;
+                }
+
+                playersOnPath.add(target.getUniqueId());
+            }
+        }
+
+        for (UUID uuid : playersOnPath) {
+            Player target = world.getPlayer(uuid);
+
+            if (target != null && target.isOnline() && !target.isDead()) {
+                zamrozGracza(target);
+            }
+        }
+    }
+
+    // Dodatkowy sweep po normalnym uderzeniu.
+    @EventHandler
+    public void onKatanaHit(EntityDamageByEntityEvent event) {
+
+        if (!(event.getDamager() instanceof Player attacker)) {
+            return;
+        }
+
+        if (!(event.getEntity() instanceof Player victim)) {
+            return;
+        }
+
+        if (!isKatana(attacker.getInventory().getItemInMainHand())) {
+            return;
+        }
+
+        if (event.isCancelled()) {
+            return;
+        }
+
+        if (event.getCause() != EntityDamageEvent.DamageCause.ENTITY_ATTACK) {
+            return;
+        }
+
+        UUID attackerUUID = attacker.getUniqueId();
+
+        if (abilityDamage.contains(attackerUUID)) {
+            return;
+        }
+
+        if (sweepProcessing.contains(attackerUUID)) {
+            return;
+        }
+
+        double sweepDamage = event.getDamage() * SWEEP_DAMAGE_PERCENT;
+
+        if (sweepDamage <= 0.0) {
+            return;
+        }
+
+        Location center = victim.getLocation().clone().add(0, 1.0, 0);
+
+        victim.getWorld().spawnParticle(
+                Particle.SWEEP_ATTACK,
+                center,
+                1,
+                0.3,
+                0.2,
+                0.3,
+                0.0
         );
 
-        return result == null || result.getHitBlock() == null;
-    }
+        victim.getWorld().playSound(
+                victim.getLocation(),
+                Sound.ENTITY_PLAYER_ATTACK_SWEEP,
+                0.8f,
+                1.2f
+        );
 
-    private boolean isSafeLocation(Player player, Location location) {
+        sweepProcessing.add(attackerUUID);
 
-        World world = location.getWorld();
+        try {
+            for (Entity entity : victim.getNearbyEntities(
+                    SWEEP_RADIUS,
+                    SWEEP_RADIUS,
+                    SWEEP_RADIUS
+            )) {
 
-        if (world == null) {
-            return false;
-        }
+                if (!(entity instanceof Player target)) {
+                    continue;
+                }
 
-        // Sprawdzamy przestrzeń na wysokości nóg, tułowia i głowy.
-        Location feet = location.clone();
-        Location body = location.clone().add(0, 0.9, 0);
-        Location head = location.clone().add(0, 1.6, 0);
+                // Nie bijemy atakującego.
+                // Pierwotny cel również otrzymuje dodatkowe obrażenia.
+                if (target.equals(attacker)) {
+                    continue;
+                }
 
-        if (!feet.getBlock().isPassable()
-                || !body.getBlock().isPassable()
-                || !head.getBlock().isPassable()) {
-            return false;
-        }
+                if (target.getLocation().distanceSquared(
+                        victim.getLocation()
+                ) > SWEEP_RADIUS * SWEEP_RADIUS) {
+                    continue;
+                }
 
-        // Nie teleportujemy gracza w innego gracza.
-        for (Entity entity : world.getNearbyEntities(
-                location, 0.3, 0.9, 0.3)) {
-
-            if (entity instanceof Player && entity != player) {
-                return false;
+                target.damage(sweepDamage, attacker);
             }
-        }
 
-        // Nie wymagamy bloku pod nogami.
-        return true;
+        } finally {
+            sweepProcessing.remove(attackerUUID);
+        }
     }
 
+    // Zamrażanie gracza.
     private void zamrozGracza(Player target) {
 
         UUID uuid = target.getUniqueId();
@@ -260,7 +380,7 @@ public class SwiatecznaKatana implements Listener {
                     return;
                 }
 
-                if (ticks >= 60) {
+                if (ticks >= FREEZE_TICKS) {
                     activeFreezes.remove(uuid);
                     cancel();
                     return;
@@ -287,6 +407,9 @@ public class SwiatecznaKatana implements Listener {
         if (freeze != null) {
             freeze.cancel();
         }
+
+        abilityDamage.remove(uuid);
+        sweepProcessing.remove(uuid);
     }
 
     @EventHandler
