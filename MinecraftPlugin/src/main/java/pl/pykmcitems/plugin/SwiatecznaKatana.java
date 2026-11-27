@@ -185,8 +185,52 @@ public class SwiatecznaKatana implements Listener {
         }
     }
 
+    // Oblicza, o ile trzeba podnieść gracza, aby ominąć kolidujące bloki.
+    private double getRequiredRaise(World world, BoundingBox box) {
+
+        double requiredRaise = 0.0;
+
+        int minX = (int) Math.floor(box.getMinX());
+        int minY = (int) Math.floor(box.getMinY());
+        int minZ = (int) Math.floor(box.getMinZ());
+
+        int maxX = (int) Math.floor(box.getMaxX());
+        int maxY = (int) Math.floor(box.getMaxY());
+        int maxZ = (int) Math.floor(box.getMaxZ());
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+
+                    Block block = world.getBlockAt(x, y, z);
+
+                    if (!block.getType().isSolid()) {
+                        continue;
+                    }
+
+                    BoundingBox blockBox = block.getBoundingBox();
+
+                    if (!blockBox.overlaps(box)) {
+                        continue;
+                    }
+
+                    double raise = blockBox.getMaxY()
+                            - box.getMinY()
+                            + 0.02;
+
+                    requiredRaise = Math.max(
+                            requiredRaise,
+                            raise
+                    );
+                }
+            }
+        }
+
+        return requiredRaise;
+    }
+
     // Górna powierzchnia bloku = teleport na blok.
-    // Boczna lub dolna powierzchnia = teleport do bloku.
+    // Boczna lub dolna powierzchnia = teleport przed blok.
     private TeleportResult findTeleportDestination(
             Player player,
             Vector direction
@@ -195,9 +239,11 @@ public class SwiatecznaKatana implements Listener {
         Location eyeLocation = player.getEyeLocation().clone();
         World world = player.getWorld();
 
+        Vector normalizedDirection = direction.clone().normalize();
+
         org.bukkit.util.RayTraceResult rayTrace = world.rayTraceBlocks(
                 eyeLocation,
-                direction.clone().normalize(),
+                normalizedDirection,
                 TELEPORT_DISTANCE,
                 FluidCollisionMode.NEVER,
                 true
@@ -227,35 +273,38 @@ public class SwiatecznaKatana implements Listener {
                     .shift(movement);
 
             if (isSafeDestination(world, destinationBox)) {
-                double distance = eyeLocation.toVector()
+                double trailDistance = eyeLocation.toVector()
                         .distance(rayTrace.getHitPosition());
 
-                return new TeleportResult(topDestination, distance);
+                return new TeleportResult(topDestination, trailDistance);
             }
         }
 
-        // Trafienie w bok lub spód bloku.
-        // Szukamy najdalszego bezpiecznego miejsca przed blokiem.
+        // Dla boku i spodu wyznaczamy odległość od pozycji gracza,
+        // a nie od oczu. Zapobiega to przesunięciu o wysokość oczu.
         double maxDistance = TELEPORT_DISTANCE;
 
         if (rayTrace != null && rayTrace.getHitPosition() != null) {
-            maxDistance = Math.min(
+            Vector toHit = rayTrace.getHitPosition().clone()
+                    .subtract(originalLocation.toVector());
+
+            maxDistance = Math.max(0.0, Math.min(
                     TELEPORT_DISTANCE,
-                    eyeLocation.toVector().distance(rayTrace.getHitPosition())
-            );
+                    toHit.dot(normalizedDirection)
+            ));
         }
 
-        double step = 0.05;
-        double lastSafeDistance = 0.0;
+        // Szukamy od punktu trafienia w stronę gracza.
+        // Dzięki temu nawet przy trafieniu tuż przy górnej krawędzi
+        // znajdujemy ostatnią bezpieczną pozycję przed blokiem.
+        double step = 0.025;
 
-        for (double distance = step;
-             distance <= maxDistance + 0.0001;
-             distance += step) {
-
-            double checkedDistance = Math.min(distance, maxDistance);
+        for (double distance = maxDistance;
+             distance >= 0.0;
+             distance -= step) {
 
             Location candidate = originalLocation.clone()
-                    .add(direction.clone().normalize().multiply(checkedDistance));
+                    .add(normalizedDirection.clone().multiply(distance));
 
             Vector movement = candidate.toVector()
                     .subtract(originalLocation.toVector());
@@ -264,21 +313,12 @@ public class SwiatecznaKatana implements Listener {
                     .clone()
                     .shift(movement);
 
-            if (!isSafeDestination(world, movedBox)) {
-                break;
-            }
-
-            lastSafeDistance = checkedDistance;
-
-            if (checkedDistance >= maxDistance) {
-                break;
+            if (isSafeDestination(world, movedBox)) {
+                return new TeleportResult(candidate, distance);
             }
         }
 
-        Location safeDestination = originalLocation.clone()
-                .add(direction.clone().normalize().multiply(lastSafeDistance));
-
-        return new TeleportResult(safeDestination, lastSafeDistance);
+        return new TeleportResult(originalLocation, 0.0);
     }
 
     // Sprawdzanie rzeczywistych hitboxów bloków.
