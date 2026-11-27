@@ -79,7 +79,7 @@ public class Rozpadacz implements Listener {
                 player,
                 "rozpadacz",
                 "&4&lRozpadacz",
-                90_000L
+                60_000L
         )) {
             player.sendActionBar(
                     Component.text(
