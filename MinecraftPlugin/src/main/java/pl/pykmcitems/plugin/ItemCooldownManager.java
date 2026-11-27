@@ -6,7 +6,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -213,6 +215,39 @@ public class ItemCooldownManager implements Listener {
         }
 
         return remaining;
+    }
+
+    // =====================================================
+    // RESET WSZYSTKICH COOLDOWNÓW GRACZA
+    // =====================================================
+
+    public void resetAllCooldowns(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        cooldowns.remove(uuid);
+
+        config.set(uuid.toString(), null);
+        save();
+
+        scoreboard.clearCooldowns(player);
+    }
+
+    // =====================================================
+    // RESET PO ŚMIERCI
+    // =====================================================
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        resetAllCooldowns(event.getEntity());
+    }
+
+    // =====================================================
+    // RESET PO WYJŚCIU Z SERWERA
+    // =====================================================
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        resetAllCooldowns(event.getPlayer());
     }
 
     // =====================================================
