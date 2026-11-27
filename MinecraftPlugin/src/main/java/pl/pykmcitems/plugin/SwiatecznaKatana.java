@@ -15,6 +15,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -88,7 +89,6 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
-        // Sprawdzamy, czy kliknięta ręka trzyma katanę.
         EquipmentSlot hand = event.getHand();
 
         if (hand == null) {
@@ -301,7 +301,7 @@ public class SwiatecznaKatana implements Listener {
     }
 
     // Dodatkowy sweep po normalnym uderzeniu.
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onKatanaHit(EntityDamageByEntityEvent event) {
 
         if (!(event.getDamager() instanceof Player attacker)) {
@@ -316,10 +316,6 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
-        if (event.isCancelled()) {
-            return;
-        }
-
         if (event.getCause() != EntityDamageEvent.DamageCause.ENTITY_ATTACK) {
             return;
         }
@@ -330,11 +326,19 @@ public class SwiatecznaKatana implements Listener {
             return;
         }
 
-        double sweepDamage = event.getDamage() * SWEEP_DAMAGE_PERCENT;
+        // Zapamiętujemy oryginalne obrażenia.
+        double originalDamage = event.getDamage();
 
-        if (sweepDamage <= 0.0) {
+        if (originalDamage <= 0.0) {
             return;
         }
+
+        // Sweep dodaje 8% do oryginalnego uderzenia.
+        double sweepDamage = originalDamage * SWEEP_DAMAGE_PERCENT;
+
+        // Zwiększamy obrażenia tego samego zdarzenia.
+        // Nie wywołujemy victim.damage(), więc nie powstaje drugi hit.
+        event.setDamage(originalDamage + sweepDamage);
 
         Location center = victim.getLocation().clone().add(0, 1.0, 0);
 
@@ -358,11 +362,6 @@ public class SwiatecznaKatana implements Listener {
         sweepProcessing.add(attackerUUID);
 
         try {
-            // Dodatkowe obrażenia dla pierwotnego celu.
-            if (victim.isOnline() && !victim.isDead()) {
-                victim.damage(sweepDamage, attacker);
-            }
-
             // Dodatkowe obrażenia dla pozostałych graczy.
             for (Entity entity : victim.getNearbyEntities(
                     SWEEP_RADIUS,
@@ -381,6 +380,10 @@ public class SwiatecznaKatana implements Listener {
                 if (target.getLocation().distanceSquared(
                         victim.getLocation()
                 ) > SWEEP_RADIUS * SWEEP_RADIUS) {
+                    continue;
+                }
+
+                if (target.isDead()) {
                     continue;
                 }
 
