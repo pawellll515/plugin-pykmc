@@ -2,6 +2,7 @@ package pl.pykmcitems.plugin;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
@@ -196,7 +197,7 @@ public class Itemy {
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(Component.text("Rózga")
-                .color(net.kyori.adventure.text.format.TextColor.fromHexString("#E6E0C2"))
+                .color(TextColor.fromHexString("#E6E0C2"))
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
@@ -233,16 +234,16 @@ public class Itemy {
         List<Component> lore = new ArrayList<>();
 
         lore.add(Component.empty());
-        
+
         lore.add(tekst("Każde Twoje uderzenie zadaje drugiego sweepa,", NamedTextColor.GRAY));
         lore.add(Component.text()
                 .append(tekst("który zadaje ", NamedTextColor.GRAY))
                 .append(tekst("8% ", NamedTextColor.RED))
                 .append(tekst("uderzenia", NamedTextColor.GRAY))
                 .build());
-        
+
         lore.add(Component.empty());
-        
+
         lore.add(Component.text()
                 .append(tekst("Klikając ", NamedTextColor.GRAY))
                 .append(tekst("SHIFT + PRAWY ", NamedTextColor.YELLOW))
@@ -270,7 +271,6 @@ public class Itemy {
         meta.addEnchant(Enchantment.SHARPNESS, 6, true);
         meta.addEnchant(Enchantment.FIRE_ASPECT, 3, true);
         meta.addEnchant(Enchantment.UNBREAKING, 4, true);
-
 
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "katana"),
@@ -376,7 +376,7 @@ public class Itemy {
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(Component.text("Hydra")
-                .color(net.kyori.adventure.text.format.TextColor.fromHexString("#3700FF"))
+                .color(TextColor.fromHexString("#3700FF"))
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
@@ -486,7 +486,7 @@ public class Itemy {
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(Component.text("Złamane Serce")
-                .color(net.kyori.adventure.text.format.TextColor.fromHexString("#E547D0"))
+                .color(TextColor.fromHexString("#E547D0"))
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
@@ -585,7 +585,7 @@ public class Itemy {
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(Component.text("Berło Drakuli")
-                .color(net.kyori.adventure.text.format.TextColor.fromHexString("#EA0000"))
+                .color(TextColor.fromHexString("#EA0000"))
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
@@ -697,6 +697,75 @@ public class Itemy {
 
         meta.getPersistentDataContainer().set(
                 new NamespacedKey(plugin, "luk_wiedzmy"),
+                PersistentDataType.BYTE,
+                (byte) 1
+        );
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    // ZŁODZIEJ ZABAWY
+
+    private static Component gradientZlodzieja(String nazwa) {
+        Component wynik = Component.empty();
+
+        for (int i = 0; i < nazwa.length(); i++) {
+            float progress = nazwa.length() <= 1
+                    ? 0
+                    : (float) i / (nazwa.length() - 1);
+
+            int red = Math.round(255 * progress);
+
+            wynik = wynik.append(
+                    Component.text(String.valueOf(nazwa.charAt(i)))
+                            .color(TextColor.color(red, 255, 0))
+                            .decoration(TextDecoration.BOLD, false)
+                            .decoration(TextDecoration.ITALIC, false)
+            );
+        }
+
+        return wynik;
+    }
+
+    public static ItemStack zlodziejZabawy(JavaPlugin plugin) {
+        ItemStack item = new ItemStack(Material.NETHERITE_SWORD);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(gradientZlodzieja("Złodziej Zabawy"));
+
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(Component.text()
+                .append(tekst("Klikając ", NamedTextColor.GRAY))
+                .append(tekst("PRAWY ", NamedTextColor.YELLOW))
+                .append(tekst("usuwasz wszystkie", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("pozytywne efekty ", NamedTextColor.GREEN))
+                .append(tekst("okolicznym przeciwnikom", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("» Zasięg ", NamedTextColor.GRAY))
+                .append(tekst("6 bloków", NamedTextColor.GRAY))
+                .build());
+
+        lore.add(Component.text()
+                .append(tekst("» Cooldown: ", NamedTextColor.GRAY))
+                .append(tekst("120s", NamedTextColor.YELLOW))
+                .build());
+
+        meta.lore(lore);
+        meta.setCustomModelData(1);
+
+        meta.addEnchant(Enchantment.SHARPNESS, 6, true);
+        meta.addEnchant(Enchantment.FIRE_ASPECT, 3, true);
+        meta.addEnchant(Enchantment.UNBREAKING, 10, true);
+
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey(plugin, "zlodziej_zabawy"),
                 PersistentDataType.BYTE,
                 (byte) 1
         );
