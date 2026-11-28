@@ -10,177 +10,146 @@ commands:
   sb:
     description: Włącza lub wyłącza scoreboard cooldownów
     usage: /sb
-
   talizmany:
     description: Otwiera menu talizmanów
     usage: /talizmany
-
   koniczyna:
     description: Nadaje Koniczynke
     usage: /koniczyna
     permission: pykmcitems.koniczyna
-
   dajtalizman:
     description: Nadaje fizyczny talizman graczowi
     usage: /dajtalizman <gracz> <id> [wartosc]
     permission: pykmcitems.dajtalizman
-
   pykmc-internal-clear:
     description: Wewnętrzne czyszczenie danych gracza
     usage: /pykmc-internal-clear <gracz>
-
   pykmc-internal-give-talisman:
     description: Wewnętrzne nadawanie talizmanów przez Skript
     usage: /pykmc-internal-give-talisman <gracz> <id> [wartosc]
-
   rog:
     description: Nadaje Rog Niebios
     usage: /rog
     permission: pykmcitems.rog
-
   glodomiot:
     description: Nadaje Glodomiot
     usage: /glodomiot
     permission: pykmcitems.glodomiot
-
   ec:
     description: Otwiera powiększony Ender Chest
     usage: /ec
-
   enderchest:
     description: Otwiera powiększony Ender Chest
     usage: /enderchest
-
   rozpadacz:
     description: Nadaje Rozpadacz
     usage: /rozpadacz
     permission: pykmcitems.rozpadacz
-
   obsikanasniezka:
     description: Nadaje Obsikana Śnieżkę
     usage: /obsikanasniezka
     permission: pykmcitems.obsikanasniezka
-
   lukwiedzmy:
     description: Nadaje Łuk Wiedźmy
     usage: /lukwiedzmy
     permission: pykmcitems.lukwiedzmy
-
   topor:
     description: Daje Topór Wykluczenia
     usage: /topor
     permission: pykmcitems.topor
-
   rozga:
     description: Nadaje Rozge
     usage: /rozga
     permission: pykmcitems.rozga
-
   ustawglowke:
     description: Ustawia glowke uzywana przez Rozge
     usage: /ustawglowke
     permission: pykmcitems.ustawglowke
-
   katana:
     description: Nadaje Swiateczna Katane
     usage: /katana
     permission: pykmcitems.katana
-
   hydra:
     description: Nadaje Hydre
     usage: /hydra
     permission: pykmcitems.hydra
-
   lodolap:
     description: Nadaje Lodolap
     usage: /lodolap
     permission: pykmcitems.lodolap
-
   buda:
     description: Daje przedmiot Buda
     usage: /buda
     permission: pykmcitems.buda
-
   zlamane:
     description: Daje Zlamane Serce
     usage: /zlamane
     permission: pykmcitems.zlamane
-
   meduza:
     description: Nadaje Klata Meduzy
     usage: /meduza
     permission: pykmcitems.meduza
-
   berlo:
     description: Nadaje Berło Drakuli
     usage: /berlo
     permission: pykmcitems.berlo
+  zlodziejzabawy:
+    description: Nadaje Złodzieja Zabawy
+    usage: /zlodziejzabawy
+    permission: pykmcitems.zlodziejzabawy
 
 permissions:
   pykmcitems.koniczyna:
     description: Pozwala nadawac Koniczynke
     default: op
-
   pykmcitems.rozpadacz:
     description: Pozwala nadawac Rozpadacz
     default: op
-
   pykmcitems.topor:
     description: Pozwala używać komendy topor
     default: op
-
   pykmcitems.rog:
     description: Pozwala nadawac Rog Niebios
     default: op
-
   pykmcitems.glodomiot:
     description: Pozwala nadawac Glodomiot
     default: op
-
   pykmcitems.hydra:
     description: Pozwala nadawac Hydre
     default: op
-
   pykmcitems.obsikanasniezka:
     description: Pozwala nadawać Obsikaną Śnieżkę
     default: op
-
   pykmcitems.lukwiedzmy:
     description: Pozwala nadawać Łuk Wiedźmy
     default: op
-
   pykmcitems.rozga:
     description: Pozwala nadawac Rozge
     default: op
-
   pykmcitems.ustawglowke:
     description: Pozwala ustawiac glowke Rozgi
     default: op
-
   pykmcitems.katana:
     description: Pozwala nadawac Katane
     default: op
-
   pykmcitems.lodolap:
     description: Pozwala nadawac Lodolap
     default: op
-
   pykmcitems.buda:
     description: Pozwala nadawac Bude
     default: op
-
   pykmcitems.zlamane:
     description: Pozwala nadawac Zlamane Serce
     default: op
-
   pykmcitems.meduza:
     description: Pozwala nadawac Klata Meduzy
     default: op
-
   pykmcitems.berlo:
     description: Pozwala otrzymać Berło Drakuli
     default: op
-
   pykmcitems.dajtalizman:
     description: Pozwala nadawać talizmany
+    default: op
+  pykmcitems.zlodziejzabawy:
+    description: Pozwala nadawać Złodzieja Zabawy
     default: op
