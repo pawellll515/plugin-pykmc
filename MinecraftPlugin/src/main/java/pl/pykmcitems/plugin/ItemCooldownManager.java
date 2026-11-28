@@ -37,10 +37,6 @@ public class ItemCooldownManager implements Listener {
         loadCooldowns();
     }
 
-    // =====================================================
-    // WCZYTYWANIE COOLDOWNÓW
-    // =====================================================
-
     private void loadCooldowns() {
         cooldowns.clear();
 
@@ -92,10 +88,6 @@ public class ItemCooldownManager implements Listener {
         }
     }
 
-    // =====================================================
-    // REDUKCJA COOLDOWNÓW Z TALIZMANU
-    // =====================================================
-
     public double getReductionPercent(Player player) {
         if (!(plugin instanceof Main main)) {
             return 0.0;
@@ -109,10 +101,6 @@ public class ItemCooldownManager implements Listener {
 
         return manager.getValue(player, "swiateczny_czas");
     }
-
-    // =====================================================
-    // ROZPOCZYNANIE COOLDOWNU
-    // =====================================================
 
     public boolean tryStartCooldown(
             Player player,
@@ -133,10 +121,6 @@ public class ItemCooldownManager implements Listener {
 
         return true;
     }
-
-    // =====================================================
-    // USTAWIANIE / NADPISYWANIE COOLDOWNU
-    // =====================================================
 
     public void setCooldown(
             Player player,
@@ -177,10 +161,6 @@ public class ItemCooldownManager implements Listener {
         );
     }
 
-    // =====================================================
-    // SPRAWDZANIE COOLDOWNU
-    // =====================================================
-
     public boolean isOnCooldown(Player player, String itemId) {
         return getRemainingCooldown(player, itemId) > 0;
     }
@@ -217,10 +197,6 @@ public class ItemCooldownManager implements Listener {
         return remaining;
     }
 
-    // =====================================================
-    // RESET WSZYSTKICH COOLDOWNÓW GRACZA
-    // =====================================================
-
     public void resetAllCooldowns(Player player) {
         UUID uuid = player.getUniqueId();
 
@@ -232,27 +208,15 @@ public class ItemCooldownManager implements Listener {
         scoreboard.clearCooldowns(player);
     }
 
-    // =====================================================
-    // RESET PO ŚMIERCI
-    // =====================================================
-
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         resetAllCooldowns(event.getEntity());
     }
 
-    // =====================================================
-    // RESET PO WYJŚCIU Z SERWERA
-    // =====================================================
-
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         resetAllCooldowns(event.getPlayer());
     }
-
-    // =====================================================
-    // PRZYWRACANIE COOLDOWNÓW PO WEJŚCIU
-    // =====================================================
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
@@ -281,10 +245,6 @@ public class ItemCooldownManager implements Listener {
         }
     }
 
-    // =====================================================
-    // NAZWY PRZEDMIOTÓW NA SCOREBOARDZIE
-    // =====================================================
-
     private String getDisplayName(String itemId) {
         return switch (itemId) {
             case "koniczynka" -> "&a&lKoniczynka";
@@ -299,13 +259,10 @@ public class ItemCooldownManager implements Listener {
             case "zlamane" -> "&c&lZłamane Serce";
             case "berlo" -> "&x&E&A&0&0&0&0Berło Drakuli";
             case "luk_wiedzmy" -> "&dŁuk Wiedźmy";
+            case "zlodziej_zabawy" -> "&aZłodziej Zabawy";
             default -> "&f" + itemId;
         };
     }
-
-    // =====================================================
-    // ZAPIS DO PLIKU
-    // =====================================================
 
     public void save() {
         try {
