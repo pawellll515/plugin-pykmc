@@ -1,6 +1,6 @@
-
 package pl.pykmcitems.plugin;
 
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -10,22 +10,24 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectTypeCategory;
 
 public class ZlodziejZabawy implements Listener {
 
-    private final Main plugin;
-    private final NamespacedKey itemKey;
-
-    private static final String COOLDOWN_ID = "zlodziej_zabawy";
+    private static final String ITEM_ID = "zlodziej_zabawy";
     private static final long COOLDOWN = 120_000L;
-    private static final double RANGE = 6.0;
+
+    private final Main plugin;
+    private final ItemCooldownManager cooldownManager;
+    private final NamespacedKey itemKey;
 
     public ZlodziejZabawy(Main plugin) {
         this.plugin = plugin;
-        this.itemKey = new NamespacedKey(plugin, "zlodziej_zabawy");
+        this.cooldownManager = plugin.getItemCooldownManager();
+        this.itemKey = new NamespacedKey(plugin, ITEM_ID);
     }
 
     @EventHandler
@@ -35,19 +37,23 @@ public class ZlodziejZabawy implements Listener {
             return;
         }
 
-        if (event.getAction() != Action.RIGHT_CLICK_AIR
-                && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+        Action action = event.getAction();
+
+        if (action != Action.RIGHT_CLICK_AIR
+                && action != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
 
         Player player = event.getPlayer();
         ItemStack item = event.getItem();
 
-        if (item == null || !item.hasItemMeta()) {
+        if (item == null || item.getType() != Material.NETHERITE_SWORD) {
             return;
         }
 
-        if (!item.getItemMeta().getPersistentDataContainer().has(
+        ItemMeta meta = item.getItemMeta();
+
+        if (meta == null || !meta.getPersistentDataContainer().has(
                 itemKey,
                 PersistentDataType.BYTE
         )) {
@@ -56,66 +62,58 @@ public class ZlodziejZabawy implements Listener {
 
         event.setCancelled(true);
 
-        ItemCooldownManager cooldownManager =
-                plugin.getItemCooldownManager();
-
         if (!cooldownManager.tryStartCooldown(
                 player,
-                COOLDOWN_ID,
+                ITEM_ID,
                 "&aZłodziej Zabawy",
                 COOLDOWN
         )) {
-            long remaining = cooldownManager.getRemainingCooldown(
-                    player,
-                    COOLDOWN_ID
-            );
-
-            long seconds = (remaining + 999) / 1000;
-
-            player.sendMessage(
-                    "§cZłodziej Zabawy jest na cooldownie! §7Pozostało: §e"
-                            + seconds + "s"
-            );
             return;
         }
 
-        int removedEffects = 0;
+        int affectedPlayers = 0;
 
-        for (Entity entity : player.getNearbyEntities(
-                RANGE,
-                RANGE,
-                RANGE
-        )) {
+        for (Entity entity : player.getNearbyEntities(6, 6, 6)) {
 
             if (!(entity instanceof Player target)) {
                 continue;
             }
 
-            // Nie usuwamy efektów osobie używającej miecza.
             if (target.equals(player)) {
                 continue;
             }
 
-            // Dokładny zasięg 6 bloków, liczony od pozycji gracza.
             if (target.getLocation().distanceSquared(
                     player.getLocation()
-            ) > RANGE * RANGE) {
+            ) > 36) {
                 continue;
             }
+
+            boolean removed = false;
 
             for (PotionEffect effect : target.getActivePotionEffects()) {
 
                 if (effect.getType().getCategory()
-                        == PotionEffectType.Category.BENEFICIAL) {
+                        == PotionEffectTypeCategory.BENEFICIAL) {
 
                     target.removePotionEffect(effect.getType());
-                    removedEffects++;
+                    removed = true;
                 }
+            }
+
+            if (removed) {
+                affectedPlayers++;
             }
         }
 
-        player.sendMessage(
-                "§aZłodziej Zabawy §7usunął pozytywne efekty graczom w pobliżu!"
-        );
+        if (affectedPlayers > 0) {
+            player.sendMessage(
+                    "§aUsunięto pozytywne efekty graczom w pobliżu!"
+            );
+        } else {
+            player.sendMessage(
+                    "§7W pobliżu nie ma graczy z pozytywnymi efektami."
+            );
+        }
     }
 }
