@@ -1,4 +1,3 @@
-
 package pl.pykmcitems.plugin;
 
 import org.bukkit.Material;
@@ -15,6 +14,7 @@ public class Main extends JavaPlugin {
     private BerloDrakuli berloDrakuli;
     private ObsikanaSniezka obsikanaSniezka;
     private LukWiedzmy lukWiedzmy;
+    private ZlodziejZabawy zlodziejZabawy;
 
     private CooldownScoreboard cooldownScoreboard;
     private ItemCooldownManager itemCooldownManager;
@@ -57,6 +57,9 @@ public class Main extends JavaPlugin {
 
         lukWiedzmy = new LukWiedzmy(this);
         getServer().getPluginManager().registerEvents(lukWiedzmy, this);
+
+        zlodziejZabawy = new ZlodziejZabawy(this);
+        getServer().getPluginManager().registerEvents(zlodziejZabawy, this);
 
         zlamaneSerce = new ZlamaneSerce(this);
 
@@ -384,6 +387,18 @@ public class Main extends JavaPlugin {
 
             player.getInventory().addItem(Itemy.lukWiedzmy(this));
             player.sendMessage("§aOtrzymales §dŁuk Wiedźmy§a!");
+            return true;
+        }
+
+        if (command.getName().equalsIgnoreCase("zlodziejzabawy")) {
+
+            if (!player.hasPermission("pykmcitems.zlodziejzabawy")) {
+                player.sendMessage("§cNie masz uprawnien do tej komendy!");
+                return true;
+            }
+
+            player.getInventory().addItem(Itemy.zlodziejZabawy(this));
+            player.sendMessage("§aOtrzymales Zlodzieja Zabawy!");
             return true;
         }
 
